@@ -3,7 +3,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 
 
-class TicTacToeEnv(gym.Env):
+class NineMensMorrisEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
