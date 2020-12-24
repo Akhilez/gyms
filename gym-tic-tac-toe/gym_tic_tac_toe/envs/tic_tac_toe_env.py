@@ -50,8 +50,12 @@ class TicTacToeEnv(gym.Env):
         # Example for using image as input:
         self.observation_space = spaces.Box(low=0, high=1, shape=(3, 3), dtype=np.uint8)
 
+        self.player = Pix.O  # Current player
+        self.rewards_for = Pix.X  # Which player is this reward for?
+
         self.state = None
         self.is_done = False
+        self.count = 0
 
     def step(self, action: int):
         # return next_state, reward, is_done, info
@@ -59,15 +63,27 @@ class TicTacToeEnv(gym.Env):
         j = 9 % action
 
         # Check if the action is LEGAL or not
-        if self.state[i][j] == Pix.S.arr:
-            prev_state = np.copy(self.state)
-            self.state[i][j] = Pix.X.arr
+        if self.state[i][j] != Pix.S.arr:
+            # Exit
+            return
 
-        return 1
+        self.state[i][j] = self.player.arr
+        self.count += 1
+        self.is_done = self.count >= 9
+        reward = 0
+
+        won = self._who_won()
+
+        if won is not None:
+            self.is_done = True
+            reward = 100 if won.string == self.rewards_for.string else -100
+
+        return self.state, reward, self.is_done
 
     def reset(self):
         self.state = self._get_empty_state()
         self.is_done = False
+        self.count = 0
         return self.state
 
     def render(self, mode='human', close=False):
@@ -89,3 +105,32 @@ class TicTacToeEnv(gym.Env):
     @staticmethod
     def _get_empty_state():
         return np.zeros((3, 3, 3), dtype=np.uint8)
+
+    def _who_won(self):
+        if self.count >= 9:
+            return True
+
+        # Check if any player won.
+        pos_sum = np.array([
+            # All rows
+            self.state[0, :],
+            self.state[1, :],
+            self.state[2, :],
+
+            # All columns
+            self.state[:, 0],
+            self.state[:, 1],
+            self.state[:, 2],
+
+            # Diagonals
+            [self.state[0, 0], self.state[1, 1], self.state[2, 2]],
+            [self.state[0, 2], self.state[1, 1], self.state[2, 0]]
+        ]).sum(1)
+
+        pos_argmax = pos_sum.argmax(1)
+        win_conditions = np.logical_and((pos_sum.max(1) == 3), (pos_argmax > 0))
+
+        won_indices = pos_argmax[win_conditions]
+
+        if len(won_indices) > 0:
+            return Pix.X if won_indices[0] == 1 else Pix.O
