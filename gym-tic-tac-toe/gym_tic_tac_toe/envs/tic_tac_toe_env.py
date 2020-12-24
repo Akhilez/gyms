@@ -14,8 +14,6 @@ class TicTacToeEnv(gym.Env):
         # Example for using image as input:
         self.observation_space = spaces.Box(low=0, high=1, shape=(3, 3), dtype=np.uint8)
 
-
-
     def step(self, action):
         # return next_state, reward, is_done, info
         return 1
