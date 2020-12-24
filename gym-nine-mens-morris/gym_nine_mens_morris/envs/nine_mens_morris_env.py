@@ -34,8 +34,18 @@ class NineMensMorrisEnv(gym.Env):
 
         self.is_done = False  # True when episode is complete
 
-    def step(self, action):
+    def step(self, position, move=None):
         # return next_state, reward, is_done, info
+
+        """
+        Legal action or not
+            if pieces are unused and move is given, then illegal
+            if pieces are used and no move is given, then illegal
+            if position is not empty, then illegal
+            if move is given and it is not empty, then illegal
+            if move is given and move is out of bounds, then illegal
+        """
+
         return 1
 
     def reset(self):
