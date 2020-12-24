@@ -64,8 +64,7 @@ class TicTacToeEnv(gym.Env):
 
         # Check if the action is LEGAL or not
         if any(self.state[i][j] != Pix.S.arr):
-            # Exit
-            return
+            return None, None, None, "Illegal action."
 
         self.state[i][j] = self.player.arr
         self.count += 1
@@ -78,7 +77,7 @@ class TicTacToeEnv(gym.Env):
             self.is_done = True
             reward = 100 if won.string == self.rewards_for.string else -100
 
-        return self.state, reward, self.is_done
+        return self.state, reward, self.is_done, None
 
     def reset(self):
         self.state = self._get_empty_state()

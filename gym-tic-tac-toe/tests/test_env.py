@@ -10,12 +10,6 @@ class TestSum(unittest.TestCase):
     def setUp(self):
         self.env = TicTacToeEnv()
 
-    def test_empty_state(self):
-        empty_state = np.zeros((3, 3, 3))
-        init_state = self.env.reset()
-
-        np.testing.assert_array_equal(empty_state, init_state)
-
     def test_state_from_string(self):
         state_string = [
             '_XO',
@@ -44,7 +38,6 @@ class TestSum(unittest.TestCase):
         self.assertNotEqual(player_1, player_2)
 
     def test_not_done(self):
-
         state_string = [
             '_XO',
             'O_X',
@@ -53,7 +46,7 @@ class TestSum(unittest.TestCase):
 
         self.env.set_state(state_string)
 
-        _, _, is_done = self.env.step(0)
+        _, _, is_done, _ = self.env.step(0)
 
         self.assertFalse(is_done)
 
@@ -66,7 +59,7 @@ class TestSum(unittest.TestCase):
 
         self.env.set_state(state_string)
 
-        _, _, is_done = self.env.step(0)
+        _, _, is_done, _ = self.env.step(0)
 
         self.assertTrue(is_done)
 
@@ -97,7 +90,7 @@ class TestSum(unittest.TestCase):
         self.env.player = Pix.X
         self.env.rewards_for = Pix.X
 
-        next_state, reward, is_done = self.env.step(4)
+        next_state, reward, is_done, _ = self.env.step(4)
 
         self.assertGreater(reward, 0)
         self.assertTrue(is_done)
@@ -118,10 +111,34 @@ class TestSum(unittest.TestCase):
         self.env.player = Pix.O
         self.env.rewards_for = Pix.X
 
-        _, reward, is_done = self.env.step(4)
+        _, reward, is_done, _ = self.env.step(4)
 
         self.assertLess(reward, 0)
         self.assertTrue(is_done)
+
+    def test_initial_state(self):
+        initial_state = self.env.reset().copy()
+        self.env.player = Pix.X
+        next_state, _, _, _ = self.env.step(0)
+
+        initial_state_label = np.array([[St, St, St], [St, St, St], [St, St, St]])
+        next_state_label = np.array([[Xt, St, St], [St, St, St], [St, St, St]])
+
+        np.testing.assert_array_equal(initial_state, initial_state_label)
+        np.testing.assert_array_equal(next_state, next_state_label)
+
+    def test_illegal_action(self):
+        state_string = [
+            'XOO',
+            '__O',
+            'OOX'
+        ]
+
+        self.env.set_state(state_string)
+
+        _, _, _, info = self.env.step(0)
+
+        self.assertIsNotNone(info)
 
 
 if __name__ == '__main__':
