@@ -1,6 +1,23 @@
 import gym
-from gym import error, spaces, utils
-from gym.utils import seeding
+import numpy as np
+from gym import spaces
+
+
+class Pix:
+    class S:
+        string = '_'
+        tup = (1, 0, 0)
+        arr = np.array(tup)
+
+    class W:
+        string = 'W'
+        tup = (0, 1, 0)
+        arr = np.array(tup)
+
+    class B:
+        string = 'B'
+        tup = (0, 0, 1)
+        arr = np.array(tup)
 
 
 class NineMensMorrisEnv(gym.Env):
