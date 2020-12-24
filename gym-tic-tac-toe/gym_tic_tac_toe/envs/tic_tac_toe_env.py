@@ -98,8 +98,19 @@ class TicTacToeEnv(gym.Env):
         print(state_str)
 
     def set_state(self, state_str):
-        state = np.array([[Pix.str_to_tup[pix] for pix in row] for row in state_str])
-        self.state = state
+        self.state = []
+        self.count = 0
+
+        for row in state_str:
+            state_row = []
+            for pix in row:
+                state_row.append(Pix.str_to_tup[pix])
+                if pix != Pix.S.string:
+                    self.count += 1
+            self.state.append(state_row)
+
+        self.state = np.array(self.state)
+        self.is_done = self.count >= 9 or self._who_won() is not None
 
     def swap_players(self):
         self.player = Pix.O if self.player.string == Pix.X.string else Pix.X
@@ -111,10 +122,6 @@ class TicTacToeEnv(gym.Env):
         return np.zeros((3, 3, 3), dtype=np.uint8)
 
     def _who_won(self):
-        if self.count >= 9:
-            return True
-
-        # Check if any player won.
         pos_sum = np.array([
             # All rows
             self.state[0, :],
