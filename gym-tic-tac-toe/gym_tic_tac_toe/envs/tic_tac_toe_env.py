@@ -59,11 +59,11 @@ class TicTacToeEnv(gym.Env):
 
     def step(self, action: int):
         # return next_state, reward, is_done, info
-        i = 9 // action
-        j = 9 % action
+        i = action // 3
+        j = action % 3
 
         # Check if the action is LEGAL or not
-        if self.state[i][j] != Pix.S.arr:
+        if any(self.state[i][j] != Pix.S.arr):
             # Exit
             return
 
@@ -84,6 +84,7 @@ class TicTacToeEnv(gym.Env):
         self.state = self._get_empty_state()
         self.is_done = False
         self.count = 0
+        self.swap_players()
         return self.state
 
     def render(self, mode='human', close=False):
@@ -99,6 +100,9 @@ class TicTacToeEnv(gym.Env):
     def set_state(self, state_str):
         state = np.array([[Pix.str_to_tup[pix] for pix in row] for row in state_str])
         self.state = state
+
+    def swap_players(self):
+        self.player = Pix.O if self.player.string == Pix.X.string else Pix.X
 
     # ------- Private methods --------------
 

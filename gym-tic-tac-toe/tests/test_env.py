@@ -40,6 +40,29 @@ class TestSum(unittest.TestCase):
 
         np.testing.assert_array_equal(state_arr, internal_state)
 
+    def test_player_swap(self):
+        self.env.reset()
+        player_1 = self.env.player.string
+
+        self.env.reset()
+        player_2 = self.env.player.string
+
+        self.assertNotEqual(player_1, player_2)
+
+    def test_not_done(self):
+
+        state_string = [
+            '_XO',
+            'O_X',
+            '___'
+        ]
+
+        self.env.set_state(state_string)
+
+        _, _, is_done = self.env.step(0)
+
+        self.assertFalse(is_done)
+
 
 if __name__ == '__main__':
     unittest.main()
