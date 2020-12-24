@@ -115,6 +115,9 @@ class TicTacToeEnv(gym.Env):
     def swap_players(self):
         self.player = Pix.O if self.player.string == Pix.X.string else Pix.X
 
+    def get_legal_actions(self):
+        return (self.state.reshape(-1, 3).argmax(1) == 0).nonzero()
+
     # ------- Private methods --------------
 
     @staticmethod
