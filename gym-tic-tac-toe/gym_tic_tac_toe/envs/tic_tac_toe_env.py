@@ -122,7 +122,9 @@ class TicTacToeEnv(gym.Env):
 
     @staticmethod
     def _get_empty_state():
-        return np.zeros((3, 3, 3), dtype=np.uint8)
+        state = np.zeros((3 * 3, 3), dtype=np.uint8)
+        state[:, 0] = 1
+        return state.reshape((3, 3, 3))
 
     def _who_won(self):
         pos_sum = np.array([
