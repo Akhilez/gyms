@@ -124,7 +124,6 @@ class NineMensMorrisEnv(gym.Env):
             (0, 0, 0): [None, None, 1, 1],
             (0, 0, 0): [None, None, 1, 1],
             (0, 0, 0): [None, None, 1, 1],
-            (0, 0, 0): [None, None, 1, 1],
         }
 
     @staticmethod
