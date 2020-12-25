@@ -27,23 +27,24 @@ class NineMensMorrisEnv(gym.Env):
 
     def __init__(self):
         # Example when using discrete actions:
-        self.action_space = spaces.MultiDiscrete((3 * 3 * 3, 4))
+        self.action_space = spaces.MultiDiscrete((3 * 2 * 4, 4))
 
         # Example for using image as input:
         self.observation_space = spaces.Tuple((
-            spaces.Box(low=0, high=1, shape=(3, 3, 3, 3), dtype=np.uint8),
+            spaces.MultiDiscrete([3, 2, 4, 3]),
             spaces.MultiDiscrete([4, 9])
         ))
 
         self.board = None
         self.mens = None
         self.is_done = False  # True when episode is complete
-        self.player = None
+        self.player = Pix.B
 
     def step(self, position, move=None):
         # return next_state, reward, is_done, info
 
-        is_illegal = self._is_action_illegal(position, move)
+        moved_position = self._get_moved_position(position, move)
+        is_illegal = self._is_action_illegal(position, moved_position)
         if is_illegal:
             return None, None, None, is_illegal
 
@@ -52,56 +53,85 @@ class NineMensMorrisEnv(gym.Env):
     def reset(self):
         self.board, self.mens = self._get_empty_state()
         self.is_done = False
+        self.swap_players()
 
         return self.board
 
     def render(self, mode='human', close=False):
         print("hello")
 
+    def swap_players(self):
+        self.player = Pix.B if self.player.string == Pix.W.string else Pix.W
+
     # ----- Private Methods ------
 
-    def _is_action_illegal(self, position, move):
+    def _is_action_illegal(self, position, moved_position):
         """
-        Legal action or not
-            if position is not empty, then illegal
-            if pieces are used and move is given and it is not empty, then illegal
-            # if pieces are unused and move is given, then illegal
-            if move is given and move is out of bounds, then illegal
-            if pieces are used and move is not given, then illegal
+        Phase 1:
+          - Position not empty
+        Phase 2:
+          - Position is non-player
+          - Move is none
+          - Moved position is out of bounds
+          - Moved position is not empty
         """
-        position = np.unravel_index(position, (3, 3, 3))
+        position = np.unravel_index(position, (3, 2, 4))
         unused, killed = self.mens[self.player.idx]
 
-        if self.board[position] != Pix.S.arr:
-            return True
+        if unused > 0:  # Phase 1
+            if self.board[position] != Pix.S.tup:
+                return "During phase 1, the position must be empty."
+        else:  # Phase 2
+            if self.board[position] != self.player.tup:
+                return "During phase 2, the position must be player's piece"
+            if moved_position is None:
+                return "Can't move the piece to that position."
+            if self.board[moved_position] != Pix.S.tup:
+                return "The moved position must be empty."
 
-
-        if move is not None:
-            move = self._unravel_move(position, move)
-
-            if unused == 0:
-                pass
-        # Move's position is out of bounds
-
-        else:
-            if unused == 0:
-                return True
+        return False
 
     @staticmethod
-    def _unravel_move(position, move):
+    def _get_moved_position(position, move):
         """
-        :param position: array of shape (3, 3, 3) -> position on the board.
-        :param move: array of shape (2) -> unused and killed
+        :param position: array of shape (3, 2, 4) -> position on the board.
+        :param move: one of [0, 1, 2, 3]
         :return: position of the move.
         """
-        pass
-
+        if move is None:
+            return
+        legal_moves = {
+            (0, 0, 0): [None, None, (0, 1, 1), (0, 1, 0)],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 0): [None, None, 1, 1],
+        }
 
     @staticmethod
     def _get_empty_state():
-        board = np.zeros((3 * 3 * 3, 3), dtype=np.uint8)
+        board = np.zeros((3 * 2 * 4, 3), dtype=np.uint8)
         board[:, 0] = 1
-        board = board.reshape((3, 3, 3, 3))
+        board = board.reshape((3, 2, 4, 3))
 
         mens = np.array([8, 8, 0, 0])
 
