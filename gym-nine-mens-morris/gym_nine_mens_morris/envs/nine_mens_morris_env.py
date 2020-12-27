@@ -60,6 +60,8 @@ class NineMensMorrisEnv(gym.Env):
             self.board[position] = Pix.S.arr
             self.board[moved_position] = self.player.arr
 
+        # TODO: Check if the game is over or not and set rewards
+
         return self.board, 0, self.is_done, None
 
     def reset(self):
@@ -152,9 +154,8 @@ class NineMensMorrisEnv(gym.Env):
 
     @staticmethod
     def _get_empty_state():
-        board = np.zeros((3 * 2 * 4, 3), dtype=np.uint8)
-        board[:, 0] = 1
-        board = board.reshape((3, 2, 4, 3))
+        board = np.zeros((3, 2, 4, 3), dtype=np.uint8)
+        board[:, :, :, 0] = 1
 
         mens = np.array([8, 8, 0, 0])
 
