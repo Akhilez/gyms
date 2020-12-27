@@ -39,15 +39,18 @@ class NineMensMorrisEnv(gym.Env):
         self.mens = None
         self.is_done = False  # True when episode is complete
         self.player = Pix.B
+        self.opponent = Pix.W
 
-    def step(self, position, move=None):
+    def step(self, position, move=None, kill_location=None):
         """
         :param position: a 3,2,4 tuple
         :param move: a scalar
+        :param kill_location: position tuple where the opponent's piece is removed.
         :return: state, reward, is_done, info
         """
 
         unused, killed = self.mens[self.player.idx]
+        unused_opponent, killed_opponent = self.mens[self.opponent.idx]
         moved_position = self._get_moved_position(position, move)
         is_phase_1 = unused > 0
         is_illegal = self._is_action_illegal(position, moved_position, is_phase_1)
@@ -56,11 +59,24 @@ class NineMensMorrisEnv(gym.Env):
 
         if is_phase_1:
             self.board[position] = self.player.arr
+            target_position = position
         else:
             self.board[position] = Pix.S.arr
             self.board[moved_position] = self.player.arr
+            target_position = moved_position
 
-        reward, self.is_done = self._is_done()
+        reward = 0
+
+        has_killed = self._has_killed(target_position)
+        if has_killed:
+            reward = 10
+            if kill_location is not None and self.board[kill_location] == self.opponent.arr:
+                self.board[kill_location] = Pix.S.arr
+                self.mens[self.opponent.idx][1] += 1
+            else:
+                return self.board, reward, self.is_done, "Invalid kill_location"
+
+        self.is_done = self._is_done()
 
         return self.board, reward, self.is_done, None
 
@@ -75,7 +91,9 @@ class NineMensMorrisEnv(gym.Env):
         print("hello")
 
     def swap_players(self):
-        self.player = Pix.B if self.player.string == Pix.W.string else Pix.W
+        opponent = self.opponent
+        self.opponent = self.player
+        self.player = opponent
 
     # ----- Private Methods ------
 
@@ -103,9 +121,13 @@ class NineMensMorrisEnv(gym.Env):
 
         return False
 
+    def _has_killed(self, recent_move):
+        # 2. Check all 4 edges of recently moved position. If there's a 3 in a line, then remove desired piece.
+        return False
+
     def _is_done(self):
-        # TODO: Check if the game is over or not and set rewards
-        return 0, False
+        # 1. if opponent killed == 9, then is_done = True, reward = 1000
+        return False
 
     @staticmethod
     def _get_moved_position(position, move):
