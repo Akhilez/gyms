@@ -50,7 +50,6 @@ class NineMensMorrisEnv(gym.Env):
         """
 
         unused, killed = self.mens[self.player.idx]
-        unused_opponent, killed_opponent = self.mens[self.opponent.idx]
         moved_position = self._get_moved_position(position, move)
         is_phase_1 = unused > 0
         is_illegal = self._is_action_illegal(position, moved_position, is_phase_1)
@@ -60,6 +59,7 @@ class NineMensMorrisEnv(gym.Env):
         if is_phase_1:
             self.board[position] = self.player.arr
             target_position = position
+            self.mens[self.player.idx][0] -= 1  # Unused will be reduced by 1
         else:
             self.board[position] = Pix.S.arr
             self.board[moved_position] = self.player.arr
@@ -77,6 +77,8 @@ class NineMensMorrisEnv(gym.Env):
                 return self.board, reward, self.is_done, "Invalid kill_location"
 
         self.is_done = self._is_done()
+        if self.is_done:
+            reward = 100
 
         return self.board, reward, self.is_done, None
 
@@ -122,12 +124,15 @@ class NineMensMorrisEnv(gym.Env):
         return False
 
     def _has_killed(self, recent_move):
-        # 2. Check all 4 edges of recently moved position. If there's a 3 in a line, then remove desired piece.
+        # Check all 4 edges of recently moved position.
+        # If there's a 3 in a line, then remove desired piece.
+
         return False
 
     def _is_done(self):
-        # 1. if opponent killed == 9, then is_done = True, reward = 1000
-        return False
+        # if opponent killed == 9, then is_done = True, reward = 1000
+        _, killed = self.mens[self.opponent.idx]
+        return killed == 9
 
     @staticmethod
     def _get_moved_position(position, move):
