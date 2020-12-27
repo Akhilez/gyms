@@ -98,6 +98,7 @@ class NineMensMorrisEnv(gym.Env):
         :param move: one of [0, 1, 2, 3]
         :return: position of the move.
         """
+
         if move is None:
             return
 
@@ -136,6 +137,8 @@ class NineMensMorrisEnv(gym.Env):
             (2, 1, 3): [(2, 0, 3), None, (2, 0, 2), (1, 1, 3)],
 
         }
+
+        return legal_moves[position][move]
 
     @staticmethod
     def _get_empty_state():
