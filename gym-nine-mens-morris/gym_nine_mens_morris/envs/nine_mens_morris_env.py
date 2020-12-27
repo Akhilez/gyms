@@ -46,7 +46,6 @@ class NineMensMorrisEnv(gym.Env):
         :param move: a scalar
         :return: state, reward, is_done, info
         """
-        # return next_state, reward, is_done, info
 
         unused, killed = self.mens[self.player.idx]
         moved_position = self._get_moved_position(position, move)
@@ -56,9 +55,10 @@ class NineMensMorrisEnv(gym.Env):
             return self.board, -100, self.is_done, is_illegal
 
         if is_phase_1:
-            pass  # TODO: Set position = player tuple
+            self.board[position] = self.player.arr
         else:
-            pass  # TODO: pos = S, move = player
+            self.board[position] = Pix.S.arr
+            self.board[moved_position] = self.player.arr
 
         return self.board, 0, self.is_done, None
 
