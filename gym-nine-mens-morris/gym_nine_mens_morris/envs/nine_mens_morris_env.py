@@ -101,10 +101,11 @@ class NineMensMorrisEnv(gym.Env):
         if move is None:
             return
         legal_moves = {
+            # All corners
             (0, 0, 0): [None, None, (0, 1, 1), (0, 1, 0)],
-            (0, 0, 0): [None, None, 1, 1],
-            (0, 0, 0): [None, None, 1, 1],
-            (0, 0, 0): [None, None, 1, 1],
+            (0, 0, 1): [(0, 1, 1), None, None, (0, 1, 2)],
+            (0, 0, 2): [None, None, 1, 1],
+            (0, 0, 3): [None, None, 1, 1],
             (0, 0, 0): [None, None, 1, 1],
             (0, 0, 0): [None, None, 1, 1],
             (0, 0, 0): [None, None, 1, 1],
