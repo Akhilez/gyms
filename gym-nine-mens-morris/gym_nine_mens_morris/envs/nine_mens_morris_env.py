@@ -27,7 +27,7 @@ class NineMensMorrisEnv(gym.Env):
 
     def __init__(self):
         # Example when using discrete actions:
-        self.action_space = spaces.MultiDiscrete((3 * 2 * 4, 4))
+        self.action_space = spaces.MultiDiscrete((3, 2, 4, 4))
 
         # Example for using image as input:
         self.observation_space = spaces.Tuple((
@@ -41,12 +41,24 @@ class NineMensMorrisEnv(gym.Env):
         self.player = Pix.B
 
     def step(self, position, move=None):
+        """
+        :param position: a 3,2,4 tuple
+        :param move: a scalar
+        :return: state, reward, is_done, info
+        """
         # return next_state, reward, is_done, info
 
+        unused, killed = self.mens[self.player.idx]
         moved_position = self._get_moved_position(position, move)
-        is_illegal = self._is_action_illegal(position, moved_position)
+        is_phase_1 = unused > 0
+        is_illegal = self._is_action_illegal(position, moved_position, is_phase_1)
         if is_illegal:
-            return None, None, None, is_illegal
+            return self.board, -100, self.is_done, is_illegal
+
+        if is_phase_1:
+            pass  # TODO: Set position = player tuple
+        else:
+            pass  # TODO: pos = S, move = player
 
         return self.board, 0, self.is_done, None
 
@@ -65,7 +77,7 @@ class NineMensMorrisEnv(gym.Env):
 
     # ----- Private Methods ------
 
-    def _is_action_illegal(self, position, moved_position):
+    def _is_action_illegal(self, position, moved_position, is_phase_1):
         """
         Phase 1:
           - Position not empty
@@ -75,18 +87,16 @@ class NineMensMorrisEnv(gym.Env):
           - Moved position is out of bounds
           - Moved position is not empty
         """
-        position = np.unravel_index(position, (3, 2, 4))
-        unused, killed = self.mens[self.player.idx]
 
-        if unused > 0:  # Phase 1
+        if is_phase_1:
             if self.board[position] != Pix.S.tup:
                 return "During phase 1, the position must be empty."
         else:  # Phase 2
             if self.board[position] != self.player.tup:
                 return "During phase 2, the position must be player's piece"
-            if moved_position is None:
+            if moved_position is None:  # Out of bounds
                 return "Can't move the piece to that position."
-            if self.board[moved_position] != Pix.S.tup:
+            if self.board[moved_position] != Pix.S.tup:  # Is not empty
                 return "The moved position must be empty."
 
         return False
