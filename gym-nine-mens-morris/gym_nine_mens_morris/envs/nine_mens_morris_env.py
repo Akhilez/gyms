@@ -60,9 +60,9 @@ class NineMensMorrisEnv(gym.Env):
             self.board[position] = Pix.S.arr
             self.board[moved_position] = self.player.arr
 
-        # TODO: Check if the game is over or not and set rewards
+        reward, self.is_done = self._is_done()
 
-        return self.board, 0, self.is_done, None
+        return self.board, reward, self.is_done, None
 
     def reset(self):
         self.board, self.mens = self._get_empty_state()
@@ -102,6 +102,10 @@ class NineMensMorrisEnv(gym.Env):
                 return "The moved position must be empty."
 
         return False
+
+    def _is_done(self):
+        # TODO: Check if the game is over or not and set rewards
+        return 0, False
 
     @staticmethod
     def _get_moved_position(position, move):
