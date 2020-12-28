@@ -27,6 +27,12 @@ class Pix:
         B.tup: B.string
     }
 
+    str_to_tup = {
+        S.string: S.tup,
+        W.string: W.tup,
+        B.string: B.tup
+    }
+
 
 legal_moves = {
 
@@ -134,19 +140,61 @@ class NineMensMorrisEnv(gym.Env):
         return self.board
 
     def render(self, mode='human', close=False):
-        v = self.board
-        v = [
-            v[0, 0, 0],
+        s = [
+            (0, 0, 0), (0, 1, 1), (0, 0, 1),
+            (1, 0, 0), (1, 1, 1), (1, 0, 1),
+            (2, 0, 0), (2, 1, 1), (2, 0, 1),
+            (0, 1, 0), (1, 1, 0), (2, 1, 0), (0, 1, 2), (1, 1, 2), (2, 1, 2),
+            (2, 0, 3), (2, 1, 3), (2, 0, 3),
+            (1, 0, 3), (1, 1, 3), (1, 0, 2),
+            (0, 0, 3), (0, 1, 3), (0, 0, 2),
         ]
+        s = [Pix.tup_to_str[tuple(self.board[x])] for x in s]
         string = f"""
-{v[0]}------------{v[0]}
+{s[0]}-----{s[1]}-----{s[2]}
+| {s[3]}---{s[4]}---{s[5]} |
+| | {s[6]}-{s[7]}-{s[8]} | |
+{s[9]}-{s[10]}-{s[11]}   {s[12]}-{s[13]}-{s[14]}
+| | {s[15]}-{s[16]}-{s[17]} | |
+| {s[18]}---{s[19]}---{s[20]} |
+{s[21]}-----{s[22]}-----{s[23]}
         """
+        print(f"Current Player: {self.player.string}")
+        print(self.mens)
         print(string)
 
     def swap_players(self):
         opponent = self.opponent
         self.opponent = self.player
         self.player = opponent
+
+    def set_state(self, board_str, mens):
+        self.reset()
+
+        s = board_str
+
+        self.board = np.array([
+            # Outer layer
+            [
+                [Pix.str_to_tup[s[0][0]], Pix.str_to_tup[s[0][12]], Pix.str_to_tup[s[6][-1]], Pix.str_to_tup[s[6][0]]],
+                [Pix.str_to_tup[s[3][0]], Pix.str_to_tup[s[0][6]], Pix.str_to_tup[s[3][-1]], Pix.str_to_tup[s[-1][6]]],
+            ],
+
+            # Middle layer
+            [
+                [Pix.str_to_tup[s[1][2]], Pix.str_to_tup[s[1][10]], Pix.str_to_tup[s[5][10]], Pix.str_to_tup[s[5][2]]],
+                [Pix.str_to_tup[s[2][3]], Pix.str_to_tup[s[1][6]], Pix.str_to_tup[s[3][10]], Pix.str_to_tup[s[5][6]]],
+            ],
+
+            # Inner layer
+            [
+                [Pix.str_to_tup[s[2][4]], Pix.str_to_tup[s[4][8]], Pix.str_to_tup[s[4][8]], Pix.str_to_tup[s[4][4]]],
+                [Pix.str_to_tup[s[4][3]], Pix.str_to_tup[s[2][6]], Pix.str_to_tup[s[3][8]], Pix.str_to_tup[s[4][6]]],
+            ],
+        ])
+
+        self.mens = mens
+        self.is_done = self._is_done()
 
     # ----- Private Methods ------
 
@@ -188,9 +236,7 @@ class NineMensMorrisEnv(gym.Env):
                 return True
 
     def _is_done(self):
-        # if opponent killed == 9, then is_done = True, reward = 100
-        _, killed = self.mens[self.opponent.idx]
-        return killed == 9
+        return self.mens[2] == 9 or self.mens[3] == 9
 
     @staticmethod
     def _get_moved_position(position, move):

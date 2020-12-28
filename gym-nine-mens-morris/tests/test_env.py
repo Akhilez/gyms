@@ -22,21 +22,37 @@ class TestNineMensMorris(unittest.TestCase):
 
     def test_state_from_string(self):
         state_string = [
-            'W-----O-----O',
-            '| O---B---W |',
-            '| | W-O-B | |',
-            'B-O-O   W-O-O',
-            '| | B-O-O | |',
-            '| O---O---B |',
-            'W-----O-----O',
+            # 123456789012
+            'W-----O-----O',  # 0
+            '| O---B---W |',  # 1
+            '| | W-O-B | |',  # 2
+            'B-O-O   W-O-O',  # 3
+            '| | B-O-O | |',  # 4
+            '| O---O---B |',  # 5
+            'W-----O-----O',  # 6
         ]
         state_arr = np.array([
+            # Outer layer
+            [
+                [Wt, St, St, Wt],  # Corners
+                [Bt, St, St, St]   # Edges
+            ],
 
+            # Middle layer
+            [
+                [St, Wt, Bt, St],  # Corners
+                [St, Bt, St, St]  # Edges
+            ],
+
+            # Inner layer
+            [
+                [Wt, Bt, St, Bt],  # Corners
+                [St, St, Wt, St]  # Edges
+            ],
         ])
 
-        self.env.set_state(state_string)
-
-        internal_state = self.env.state
+        self.env.set_state(state_string, [0, 0, 0, 0])
+        internal_state = self.env.board
 
         np.testing.assert_array_equal(state_arr, internal_state)
 
