@@ -3,6 +3,17 @@ from gym_nine_mens_morris.envs import NineMensMorrisEnv
 import unittest
 import numpy as np
 
+from gym_nine_mens_morris.envs.nine_mens_morris_env import Pix
+
+
+St = Pix.S.tup
+Wt = Pix.W.tup
+Bt = Pix.B.tup
+
+Ss = Pix.S.string
+Ws = Pix.W.string
+Bs = Pix.B.string
+
 
 class TestNineMensMorris(unittest.TestCase):
 
@@ -12,17 +23,15 @@ class TestNineMensMorris(unittest.TestCase):
     def test_state_from_string(self):
         state_string = [
             'W-----O-----O',
-            '| O---W---W |',
-            '| | W-O-W | |',
-            'W-O-O   W-O-O',
-            '| | W-O-O | |',
-            '| O---O---W |',
+            '| O---B---W |',
+            '| | W-O-B | |',
+            'B-O-O   W-O-O',
+            '| | B-O-O | |',
+            '| O---O---B |',
             'W-----O-----O',
         ]
         state_arr = np.array([
-            [St, Xt, Ot],
-            [Ot, St, Xt],
-            [St, St, St]
+
         ])
 
         self.env.set_state(state_string)
