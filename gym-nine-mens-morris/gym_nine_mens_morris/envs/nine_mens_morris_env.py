@@ -22,6 +22,43 @@ class Pix:
         idx = np.array([1, 3])
 
 
+legal_moves = {
+
+    # All corners
+    (0, 0, 0): [None, None, (0, 1, 1), (0, 1, 0)],
+    (0, 0, 1): [(0, 1, 1), None, None, (0, 1, 2)],
+    (0, 0, 2): [(0, 1, 3), (0, 1, 2), None, None],
+    (0, 0, 3): [None, (0, 1, 0), (0, 1, 3), None],
+
+    (1, 0, 0): [None, None, (1, 1, 1), (1, 1, 0)],
+    (1, 0, 1): [(1, 1, 1), None, None, (1, 1, 2)],
+    (1, 0, 2): [(1, 1, 3), (1, 1, 2), None, None],
+    (1, 0, 3): [None, (1, 1, 0), (1, 1, 3), None],
+
+    (2, 0, 0): [None, None, (2, 1, 1), (2, 1, 0)],
+    (2, 0, 1): [(2, 1, 1), None, None, (2, 1, 2)],
+    (2, 0, 2): [(2, 1, 3), (2, 1, 2), None, None],
+    (2, 0, 3): [None, (2, 1, 0), (2, 1, 3), None],
+
+    # All edges
+    (0, 1, 0): [None, (0, 0, 0), (1, 1, 0), (0, 0, 3)],
+    (0, 1, 1): [(0, 1, 1), None, (0, 0, 1), (1, 0, 1)],
+    (0, 1, 2): [(1, 1, 2), (0, 0, 1), None, (0, 0, 2)],
+    (0, 1, 3): [(0, 0, 3), (1, 1, 3), (0, 0, 2), None],
+
+    (1, 1, 0): [(0, 1, 0), (1, 0, 0), (2, 1, 0), (1, 0, 3)],
+    (1, 1, 1): [(1, 1, 1), (0, 1, 1), (1, 0, 1), (2, 0, 1)],
+    (1, 1, 2): [(2, 1, 2), (1, 0, 1), (0, 1, 2), (1, 0, 2)],
+    (1, 1, 3): [(1, 0, 3), (2, 1, 3), (1, 0, 2), (0, 1, 3)],
+
+    (2, 1, 0): [(1, 1, 0), (2, 0, 0), None, (2, 0, 3)],
+    (2, 1, 1): [(2, 1, 1), (1, 1, 1), (2, 0, 1), None],
+    (2, 1, 2): [None, (2, 0, 1), (1, 1, 2), (2, 0, 2)],
+    (2, 1, 3): [(2, 0, 3), None, (2, 0, 2), (1, 1, 3)],
+
+}
+
+
 class NineMensMorrisEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
@@ -127,10 +164,17 @@ class NineMensMorrisEnv(gym.Env):
         # Check all 4 edges of recently moved position.
         # If there's a 3 in a line, then remove desired piece.
 
-        return False
+        left, up, right, down = legal_moves[recent_move]
+
+        if left is not None and right is not None:
+            if self.board[left] == self.board[recent_move] and self.board[right] == self.board[recent_move]:
+                return True
+        if up is not None and down is not None:
+            if self.board[up] == self.board[recent_move] and self.board[down] == self.board[recent_move]:
+                return True
 
     def _is_done(self):
-        # if opponent killed == 9, then is_done = True, reward = 1000
+        # if opponent killed == 9, then is_done = True, reward = 100
         _, killed = self.mens[self.opponent.idx]
         return killed == 9
 
@@ -144,42 +188,6 @@ class NineMensMorrisEnv(gym.Env):
 
         if move is None:
             return
-
-        legal_moves = {
-
-            # All corners
-            (0, 0, 0): [None, None, (0, 1, 1), (0, 1, 0)],
-            (0, 0, 1): [(0, 1, 1), None, None, (0, 1, 2)],
-            (0, 0, 2): [(0, 1, 3), (0, 1, 2), None, None],
-            (0, 0, 3): [None, (0, 1, 0), (0, 1, 3), None],
-
-            (1, 0, 0): [None, None, (1, 1, 1), (1, 1, 0)],
-            (1, 0, 1): [(1, 1, 1), None, None, (1, 1, 2)],
-            (1, 0, 2): [(1, 1, 3), (1, 1, 2), None, None],
-            (1, 0, 3): [None, (1, 1, 0), (1, 1, 3), None],
-
-            (2, 0, 0): [None, None, (2, 1, 1), (2, 1, 0)],
-            (2, 0, 1): [(2, 1, 1), None, None, (2, 1, 2)],
-            (2, 0, 2): [(2, 1, 3), (2, 1, 2), None, None],
-            (2, 0, 3): [None, (2, 1, 0), (2, 1, 3), None],
-
-            # All edges
-            (0, 1, 0): [None, (0, 0, 0), (1, 1, 0), (0, 0, 3)],
-            (0, 1, 1): [(0, 1, 1), None, (0, 0, 1), (1, 0, 1)],
-            (0, 1, 2): [(1, 1, 2), (0, 0, 1), None, (0, 0, 2)],
-            (0, 1, 3): [(0, 0, 3), (1, 1, 3), (0, 0, 2), None],
-
-            (1, 1, 0): [(0, 1, 0), (1, 0, 0), (2, 1, 0), (1, 0, 3)],
-            (1, 1, 1): [(1, 1, 1), (0, 1, 1), (1, 0, 1), (2, 0, 1)],
-            (1, 1, 2): [(2, 1, 2), (1, 0, 1), (0, 1, 2), (1, 0, 2)],
-            (1, 1, 3): [(1, 0, 3), (2, 1, 3), (1, 0, 2), (0, 1, 3)],
-
-            (2, 1, 0): [(1, 1, 0), (2, 0, 0), None, (2, 0, 3)],
-            (2, 1, 1): [(2, 1, 1), (1, 1, 1), (2, 0, 1), None],
-            (2, 1, 2): [None, (2, 0, 1), (1, 1, 2), (2, 0, 2)],
-            (2, 1, 3): [(2, 0, 3), None, (2, 0, 2), (1, 1, 3)],
-
-        }
 
         return legal_moves[position][move]
 
