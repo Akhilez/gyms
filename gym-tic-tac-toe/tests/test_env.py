@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 
 
-class TestSum(unittest.TestCase):
+class TestTicTacToe(unittest.TestCase):
 
     def setUp(self):
         self.env = TicTacToeEnv()

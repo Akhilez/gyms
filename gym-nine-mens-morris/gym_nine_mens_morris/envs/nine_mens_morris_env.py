@@ -5,7 +5,7 @@ from gym import spaces
 
 class Pix:
     class S:
-        string = '_'
+        string = 'O'
         tup = (1, 0, 0)
         arr = np.array(tup)
 
@@ -20,6 +20,12 @@ class Pix:
         tup = (0, 0, 1)
         arr = np.array(tup)
         idx = np.array([1, 3])
+
+    tup_to_str = {
+        S.tup: S.string,
+        W.tup: W.string,
+        B.tup: B.string
+    }
 
 
 legal_moves = {
@@ -75,8 +81,8 @@ class NineMensMorrisEnv(gym.Env):
         self.board = None
         self.mens = None
         self.is_done = False  # True when episode is complete
-        self.player = Pix.B
-        self.opponent = Pix.W
+        self.player = Pix.W
+        self.opponent = Pix.B
 
     def step(self, position, move=None, kill_location=None):
         """
@@ -117,17 +123,25 @@ class NineMensMorrisEnv(gym.Env):
         if self.is_done:
             reward = 100
 
+        self.swap_players()
+
         return self.board, reward, self.is_done, None
 
     def reset(self):
         self.board, self.mens = self._get_empty_state()
         self.is_done = False
-        self.swap_players()
 
         return self.board
 
     def render(self, mode='human', close=False):
-        print("hello")
+        v = self.board
+        v = [
+            v[0, 0, 0],
+        ]
+        string = f"""
+{v[0]}------------{v[0]}
+        """
+        print(string)
 
     def swap_players(self):
         opponent = self.opponent
@@ -148,7 +162,7 @@ class NineMensMorrisEnv(gym.Env):
         """
 
         if is_phase_1:
-            if self.board[position] != Pix.S.tup:
+            if all(self.board[position] != Pix.S.tup):
                 return "During phase 1, the position must be empty."
         else:  # Phase 2
             if self.board[position] != self.player.tup:
