@@ -215,11 +215,11 @@ class NineMensMorrisEnv(gym.Env):
             if all(self.board[position] != Pix.S.tup):
                 return "During phase 1, the position must be empty."
         else:  # Phase 2
-            if self.board[position] != self.player.tup:
+            if all(self.board[position] != self.player.tup):
                 return "During phase 2, the position must be player's piece"
             if moved_position is None:  # Out of bounds
                 return "Can't move the piece to that position."
-            if self.board[moved_position] != Pix.S.tup:  # Is not empty
+            if all(self.board[moved_position] != Pix.S.tup):  # Is not empty
                 return "The moved position must be empty."
 
         return False

@@ -5,7 +5,6 @@ import numpy as np
 
 from gym_nine_mens_morris.envs.nine_mens_morris_env import Pix
 
-
 St = Pix.S.tup
 Wt = Pix.W.tup
 Bt = Pix.B.tup
@@ -35,7 +34,7 @@ class TestNineMensMorris(unittest.TestCase):
             # Outer layer
             [
                 [Wt, St, St, Wt],  # Corners
-                [Bt, St, St, St]   # Edges
+                [Bt, St, St, St]  # Edges
             ],
 
             # Middle layer
@@ -74,7 +73,29 @@ class TestNineMensMorris(unittest.TestCase):
 
         self.assertNotEqual(player_1, player_2)
 
+    def test_not_done(self):
+        self.env.reset()
+
+        _, _, is_done, _ = self.env.step((0, 0, 0))
+
+        self.assertFalse(is_done)
+
+        self.env.mens = np.array([0, 0, 0, 8])
+        self.assertFalse(self.env.is_done)
+
+    def test_done(self):
+        self.env.reset()
+
+        self.env.mens = np.array([0, 0, 8, 9])
+
+        _, _, is_done, _ = self.env.step((0, 0, 0))
+
+        self.assertFalse(is_done)
+
+    def test_killed(self):
+        self.env.reset()
+        # TODO: Continue  here
+
 
 if __name__ == '__main__':
     unittest.main()
-
