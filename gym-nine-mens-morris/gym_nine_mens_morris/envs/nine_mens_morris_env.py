@@ -87,8 +87,8 @@ class NineMensMorrisEnv(gym.Env):
         self.board = None
         self.mens = None
         self.is_done = False  # True when episode is complete
-        self.player = Pix.W
-        self.opponent = Pix.B
+        self.player = Pix.B
+        self.opponent = Pix.W
 
     def step(self, position, move=None, kill_location=None):
         """
@@ -137,6 +137,8 @@ class NineMensMorrisEnv(gym.Env):
         self.board, self.mens = self._get_empty_state()
         self.is_done = False
 
+        self.swap_players()
+
         return self.board
 
     def render(self, mode='human', close=False):
@@ -183,13 +185,13 @@ class NineMensMorrisEnv(gym.Env):
             # Middle layer
             [
                 [Pix.str_to_tup[s[1][2]], Pix.str_to_tup[s[1][10]], Pix.str_to_tup[s[5][10]], Pix.str_to_tup[s[5][2]]],
-                [Pix.str_to_tup[s[2][3]], Pix.str_to_tup[s[1][6]], Pix.str_to_tup[s[3][10]], Pix.str_to_tup[s[5][6]]],
+                [Pix.str_to_tup[s[3][2]], Pix.str_to_tup[s[1][6]], Pix.str_to_tup[s[3][10]], Pix.str_to_tup[s[5][6]]],
             ],
 
             # Inner layer
             [
-                [Pix.str_to_tup[s[2][4]], Pix.str_to_tup[s[4][8]], Pix.str_to_tup[s[4][8]], Pix.str_to_tup[s[4][4]]],
-                [Pix.str_to_tup[s[4][3]], Pix.str_to_tup[s[2][6]], Pix.str_to_tup[s[3][8]], Pix.str_to_tup[s[4][6]]],
+                [Pix.str_to_tup[s[2][4]], Pix.str_to_tup[s[2][8]], Pix.str_to_tup[s[4][8]], Pix.str_to_tup[s[4][4]]],
+                [Pix.str_to_tup[s[3][4]], Pix.str_to_tup[s[2][6]], Pix.str_to_tup[s[3][8]], Pix.str_to_tup[s[4][6]]],
             ],
         ])
 

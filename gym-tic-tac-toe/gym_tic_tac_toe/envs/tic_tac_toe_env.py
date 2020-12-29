@@ -77,6 +77,8 @@ class TicTacToeEnv(gym.Env):
             self.is_done = True
             reward = 100 if won.string == self.rewards_for.string else -100
 
+        self.swap_players()
+
         return self.state, reward, self.is_done, None
 
     def reset(self):
