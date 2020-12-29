@@ -56,11 +56,20 @@ class TestNineMensMorris(unittest.TestCase):
 
         np.testing.assert_array_equal(state_arr, internal_state)
 
-    def test_player_swap(self):
+    def test_player_swap_on_reset(self):
         self.env.reset()
         player_1 = self.env.player.string
 
         self.env.reset()
+        player_2 = self.env.player.string
+
+        self.assertNotEqual(player_1, player_2)
+
+    def test_player_swap_on_step(self):
+        self.env.reset()
+        player_1 = self.env.player.string
+
+        self.env.step((0, 0, 0))
         player_2 = self.env.player.string
 
         self.assertNotEqual(player_1, player_2)
