@@ -54,12 +54,12 @@ legal_moves = {
 
     # All edges
     (0, 1, 0): [None, (0, 0, 0), (1, 1, 0), (0, 0, 3)],
-    (0, 1, 1): [(0, 1, 1), None, (0, 0, 1), (1, 0, 1)],
+    (0, 1, 1): [(0, 0, 0), None, (0, 0, 1), (1, 1, 1)],
     (0, 1, 2): [(1, 1, 2), (0, 0, 1), None, (0, 0, 2)],
     (0, 1, 3): [(0, 0, 3), (1, 1, 3), (0, 0, 2), None],
 
     (1, 1, 0): [(0, 1, 0), (1, 0, 0), (2, 1, 0), (1, 0, 3)],
-    (1, 1, 1): [(1, 1, 1), (0, 1, 1), (1, 0, 1), (2, 0, 1)],
+    (1, 1, 1): [(1, 0, 1), (0, 1, 1), (1, 0, 1), (2, 1, 1)],
     (1, 1, 2): [(2, 1, 2), (1, 0, 1), (0, 1, 2), (1, 0, 2)],
     (1, 1, 3): [(1, 0, 3), (2, 1, 3), (1, 0, 2), (0, 1, 3)],
 
@@ -105,10 +105,11 @@ class NineMensMorrisEnv(gym.Env):
         if is_illegal:
             return self.board, -100, self.is_done, is_illegal
 
+        # Update board
         if is_phase_1:
             self.board[position] = self.player.arr
             target_position = position
-            self.mens[self.player.idx][0] -= 1  # Unused will be reduced by 1
+            self.mens[self.player.idx[0]] -= 1  # Unused will be reduced by 1
         else:
             self.board[position] = Pix.S.arr
             self.board[moved_position] = self.player.arr
@@ -118,10 +119,10 @@ class NineMensMorrisEnv(gym.Env):
 
         has_killed = self._has_killed(target_position)
         if has_killed:
+            self.mens[self.opponent.idx[1]] += 1
             reward = 10
             if kill_location is not None and self.board[kill_location] == self.opponent.arr:
                 self.board[kill_location] = Pix.S.arr
-                self.mens[self.opponent.idx][1] += 1
             else:
                 return self.board, reward, self.is_done, "Invalid kill_location"
 
@@ -195,7 +196,7 @@ class NineMensMorrisEnv(gym.Env):
             ],
         ])
 
-        self.mens = mens
+        self.mens = np.array(mens)
         self.is_done = self._is_done()
 
     # ----- Private Methods ------
@@ -229,16 +230,35 @@ class NineMensMorrisEnv(gym.Env):
         # If there's a 3 in a line, then remove desired piece.
 
         left, up, right, down = legal_moves[recent_move]
+        left_2, up_2, right_2, down_2 = self.get_neighbours_level_2(recent_move)
 
-        if left is not None and right is not None:
-            if self.board[left] == self.board[recent_move] and self.board[right] == self.board[recent_move]:
-                return True
-        if up is not None and down is not None:
-            if self.board[up] == self.board[recent_move] and self.board[down] == self.board[recent_move]:
-                return True
+        positions = [
+            (left, right),
+            (up, down),
+            (left, left_2),
+            (right_2, right),
+            (up, up_2),
+            (down, down_2)
+        ]
+
+        for pos1, pos2 in positions:
+            print(pos1, pos2, recent_move)
+            if pos1 is not None and pos2 is not None:
+                if all(self.board[pos1] == self.board[recent_move]) and all(self.board[pos2] == self.board[recent_move]):
+                    return True
 
     def _is_done(self):
         return self.mens[2] == 9 or self.mens[3] == 9
+
+    @staticmethod
+    def get_neighbours_level_2(position):
+        l, u, r, d = legal_moves[position]
+        nones = [None, None, None, None]
+        ll = legal_moves.get(l, nones)[0]
+        uu = legal_moves.get(u, nones)[1]
+        rr = legal_moves.get(r, nones)[2]
+        dd = legal_moves.get(d, nones)[3]
+        return ll, uu, rr, dd
 
     @staticmethod
     def _get_moved_position(position, move):

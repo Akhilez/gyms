@@ -92,9 +92,71 @@ class TestNineMensMorris(unittest.TestCase):
 
         self.assertFalse(is_done)
 
-    def test_killed(self):
-        self.env.reset()
-        # TODO: Continue  here
+    def test_not_killed(self):
+        state_string = [
+            # 123456789012
+            'W-----O-----W',  # 0
+            '| O---B---W |',  # 1
+            '| | W-O-B | |',  # 2
+            'B-O-O   W-O-O',  # 3
+            '| | B-O-O | |',  # 4
+            '| O---O---B |',  # 5
+            'W-----O-----O',  # 6
+        ]
+
+        self.env.set_state(state_string, [3, 4, 0, 0])
+        self.env.player = Pix.B
+        self.env.opponent = Pix.W
+
+        state, reward, is_done, info = self.env.step((0, 1, 1))
+
+        self.assertEqual(reward, 0)
+        self.assertEqual(list(self.env.mens), [3, 3, 0, 0])
+        self.assertFalse(is_done)
+
+    def test_killed_no_removed_piece(self):
+        state_string = [
+            # 123456789012
+            'W-----O-----W',  # 0
+            '| O---B---W |',  # 1
+            '| | W-O-B | |',  # 2
+            'B-O-O   W-O-O',  # 3
+            '| | B-O-O | |',  # 4
+            '| O---O---B |',  # 5
+            'W-----O-----O',  # 6
+        ]
+
+        self.env.set_state(state_string, [3, 4, 0, 0])
+        self.env.player = Pix.W
+        self.env.opponent = Pix.B
+
+        state, reward, is_done, info = self.env.step((0, 1, 1))
+
+        self.assertEqual(reward, 10)
+        self.assertEqual(list(self.env.mens), [2, 4, 0, 1])
+        self.assertFalse(is_done)
+
+    def test_killed_with_removed_piece(self):
+        state_string = [
+            # 123456789012
+            'O-----O-----W',  # 0
+            '| O---B---W |',  # 1
+            '| | W-O-B | |',  # 2
+            'B-O-O   W-O-W',  # 3
+            '| | B-O-O | |',  # 4
+            '| O---O---B |',  # 5
+            'W-----O-----O',  # 6
+        ]
+
+        self.env.set_state(state_string, [3, 4, 0, 0])
+        self.env.player = Pix.W
+        self.env.opponent = Pix.B
+
+        state, reward, is_done, info = self.env.step((0, 0, 2))
+
+        self.assertEqual(reward, 10)
+        self.assertEqual(list(self.env.mens), [2, 4, 0, 1])
+        self.assertFalse(is_done)
 
 
 if __name__ == '__main__':
