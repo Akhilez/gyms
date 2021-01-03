@@ -87,8 +87,23 @@ class NineMensMorrisEnv(gym.Env):
         self.board = None
         self.mens = None
         self.is_done = False  # True when episode is complete
-        self.player = Pix.B
-        self.opponent = Pix.W
+        self._player = Pix.B
+        self._opponents = {Pix.W: Pix.B, Pix.B: Pix.W}
+
+    @property
+    def player(self):
+        return self._player
+
+    @property
+    def opponent(self):
+        return self._opponents.get(self.player)
+
+    @player.setter
+    def player(self, player):
+        if self.player == Pix.W or self.player == Pix.B:
+            self._player = player
+        else:
+            raise Exception("Player must be either Pix.W or Pix.O")
 
     def step(self, position, move=None, kill_location=None):
         """
@@ -101,11 +116,12 @@ class NineMensMorrisEnv(gym.Env):
         unused, killed = self.mens[self.player.idx]
         moved_position = self._get_moved_position(position, move)
         is_phase_1 = unused > 0
-        is_illegal = self._is_action_illegal(position, moved_position, is_phase_1)
+        is_illegal = self._is_action_illegal(position, moved_position, is_phase_1, kill_location)
         if is_illegal:
-            return self.board, -100, self.is_done, is_illegal
+            return (self.board, self.mens), 0, self.is_done, is_illegal
 
         # Update board
+        old_state = self.board.copy(), self.mens.copy()
         if is_phase_1:
             self.board[position] = self.player.arr
             target_position = position
@@ -119,12 +135,12 @@ class NineMensMorrisEnv(gym.Env):
 
         has_killed = self._has_killed(target_position)
         if has_killed:
-            self.mens[self.opponent.idx[1]] += 1
+            if kill_location is None:
+                self.board, self.mens = old_state
+                return (self.board, self.mens), reward, self.is_done, "Invalid kill_location"
             reward = 10
-            if kill_location is not None and self.board[kill_location] == self.opponent.arr:
-                self.board[kill_location] = Pix.S.arr
-            else:
-                return self.board, reward, self.is_done, "Invalid kill_location"
+            self.mens[self.opponent.idx[1]] += 1
+            self.board[kill_location] = Pix.S.arr
 
         self.is_done = self._is_done()
         if self.is_done:
@@ -132,7 +148,7 @@ class NineMensMorrisEnv(gym.Env):
 
         self.swap_players()
 
-        return self.board, reward, self.is_done, None
+        return (self.board, self.mens), reward, self.is_done, None
 
     def reset(self):
         self.board, self.mens = self._get_empty_state()
@@ -167,9 +183,7 @@ class NineMensMorrisEnv(gym.Env):
         print(string)
 
     def swap_players(self):
-        opponent = self.opponent
-        self.opponent = self.player
-        self.player = opponent
+        self.player = self._opponents[self.player]
 
     def set_state(self, board_str, mens):
         self.reset()
@@ -201,7 +215,7 @@ class NineMensMorrisEnv(gym.Env):
 
     # ----- Private Methods ------
 
-    def _is_action_illegal(self, position, moved_position, is_phase_1):
+    def _is_action_illegal(self, position, moved_position, is_phase_1, kill_location=None):
         """
         Phase 1:
           - Position not empty
@@ -213,17 +227,18 @@ class NineMensMorrisEnv(gym.Env):
         """
 
         if is_phase_1:
-            if all(self.board[position] != Pix.S.tup):
+            if any(self.board[position] != Pix.S.arr):
                 return "During phase 1, the position must be empty."
         else:  # Phase 2
-            if all(self.board[position] != self.player.tup):
+            if any(self.board[position] != self.player.arr):
                 return "During phase 2, the position must be player's piece"
             if moved_position is None:  # Out of bounds
                 return "Can't move the piece to that position."
-            if all(self.board[moved_position] != Pix.S.tup):  # Is not empty
+            if any(self.board[moved_position] != Pix.S.arr):  # Is not empty
                 return "The moved position must be empty."
 
-        return False
+        if kill_location is not None and any(self.board[kill_location] != self.opponent.arr):
+            return "Invalid kill_location"
 
     def _has_killed(self, recent_move):
         # Check all 4 edges of recently moved position.
@@ -242,7 +257,6 @@ class NineMensMorrisEnv(gym.Env):
         ]
 
         for pos1, pos2 in positions:
-            print(pos1, pos2, recent_move)
             if pos1 is not None and pos2 is not None:
                 if all(self.board[pos1] == self.board[recent_move]) and all(self.board[pos2] == self.board[recent_move]):
                     return True

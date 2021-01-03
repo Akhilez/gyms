@@ -19,6 +19,10 @@ class TestNineMensMorris(unittest.TestCase):
     def setUp(self):
         self.env = NineMensMorrisEnv()
 
+    def test_renders_without_errors(self):
+        self.env.reset()
+        self.env.render()
+
     def test_state_from_string(self):
         state_string = [
             # 123456789012
@@ -106,7 +110,6 @@ class TestNineMensMorris(unittest.TestCase):
 
         self.env.set_state(state_string, [3, 4, 0, 0])
         self.env.player = Pix.B
-        self.env.opponent = Pix.W
 
         state, reward, is_done, info = self.env.step((0, 1, 1))
 
@@ -128,13 +131,22 @@ class TestNineMensMorris(unittest.TestCase):
 
         self.env.set_state(state_string, [3, 4, 0, 0])
         self.env.player = Pix.W
-        self.env.opponent = Pix.B
+        old_board = self.env.board.copy()
 
-        state, reward, is_done, info = self.env.step((0, 1, 1))
+        (state, _), reward, is_done, info = self.env.step((0, 1, 1))
 
-        self.assertEqual(reward, 10)
-        self.assertEqual(list(self.env.mens), [2, 4, 0, 1])
+        self.assertIsNotNone(info)
+        self.assertEqual(reward, 0)
+        self.assertEqual(list(self.env.mens), [3, 4, 0, 0])
         self.assertFalse(is_done)
+        np.testing.assert_array_equal(old_board, state)
+
+        (state, _), reward, is_done, info = self.env.step((0, 1, 1), kill_location=(0, 1, 2))
+
+        self.assertEqual(reward, 0)
+        self.assertEqual(list(self.env.mens), [3, 4, 0, 0])
+        self.assertFalse(is_done)
+        np.testing.assert_array_equal(old_board, state)
 
     def test_killed_with_removed_piece(self):
         state_string = [
@@ -150,13 +162,48 @@ class TestNineMensMorris(unittest.TestCase):
 
         self.env.set_state(state_string, [3, 4, 0, 0])
         self.env.player = Pix.W
-        self.env.opponent = Pix.B
 
-        state, reward, is_done, info = self.env.step((0, 0, 2))
+        (state, _), reward, is_done, info = self.env.step((0, 0, 2), kill_location=(1, 1, 1))
 
         self.assertEqual(reward, 10)
         self.assertEqual(list(self.env.mens), [2, 4, 0, 1])
         self.assertFalse(is_done)
+        np.testing.assert_array_equal(state[1, 1, 1], Pix.S.arr)
+
+    def test_illegal_move_overlap(self):
+        self.env.reset()
+        self.env.player = Pix.W
+        (state, _), *_ = self.env.step((0, 0, 0))
+        np.testing.assert_array_equal(state[0, 0, 0], Pix.W.arr)
+        (state, _), _, _, info = self.env.step((0, 0, 0))
+
+        np.testing.assert_array_equal(state[0, 0, 0], Pix.W.arr)
+        self.assertIsNotNone(info)
+        self.assertEqual(self.env.player, Pix.B)
+
+    def test_illegal_move_phase_2(self):
+        self.env.reset()
+        self.env.player = Pix.W
+        self.env.step((0, 0, 0))
+        self.mens = np.zeros(4)
+
+        (state, _), _, _, info = self.env.step((0, 0, 0))
+        np.testing.assert_array_equal(state[0, 0, 0], Pix.W.arr)
+        self.assertIsNotNone(info)
+        self.assertEqual(self.env.player, Pix.B)
+
+        # Move to out out bounds
+        self.player = Pix.W
+        (state, _), _, _, info = self.env.step((0, 0, 0), 0)
+        self.assertIsNotNone(info)
+
+        # Moved position is not empty
+        self.player = Pix.B
+        _, _, _, info = self.env.step((0, 1, 1))
+        (state, _), _, _, info = self.env.step((0, 0, 0), 2)
+        self.assertIsNotNone(info)
+        np.testing.assert_array_equal(state[0, 0, 0], Pix.W.arr)
+        np.testing.assert_array_equal(state[0, 1, 1], Pix.B.arr)
 
 
 if __name__ == '__main__':
