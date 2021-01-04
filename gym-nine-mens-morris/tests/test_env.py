@@ -131,7 +131,7 @@ class TestNineMensMorris(unittest.TestCase):
 
         self.env.set_state(state_string, [3, 4, 0, 0])
         self.env.player = Pix.W
-        old_board = self.env.board.copy()
+        old_board = np.array(self.env.board)
 
         (state, _), reward, is_done, info = self.env.step((0, 1, 1))
 
@@ -185,25 +185,53 @@ class TestNineMensMorris(unittest.TestCase):
         self.env.reset()
         self.env.player = Pix.W
         self.env.step((0, 0, 0))
-        self.mens = np.zeros(4)
+        self.env.mens = np.zeros(4)
 
-        (state, _), _, _, info = self.env.step((0, 0, 0))
+        (state, _), _, _, info = self.env.step((0, 0, 0))  # B
         np.testing.assert_array_equal(state[0, 0, 0], Pix.W.arr)
         self.assertIsNotNone(info)
         self.assertEqual(self.env.player, Pix.B)
 
-        # Move to out out bounds
+        # Move to out of bounds
         self.player = Pix.W
-        (state, _), _, _, info = self.env.step((0, 0, 0), 0)
+        (state, _), _, _, info = self.env.step((0, 0, 0), 0)  # W
         self.assertIsNotNone(info)
 
         # Moved position is not empty
         self.player = Pix.B
-        _, _, _, info = self.env.step((0, 1, 1))
-        (state, _), _, _, info = self.env.step((0, 0, 0), 2)
+        self.env.mens = np.array([8, 8, 0, 0])
+        _, _, _, info = self.env.step((0, 1, 1))  # B
+        (state, _), _, _, info = self.env.step((0, 0, 0), 2)  # W
         self.assertIsNotNone(info)
         np.testing.assert_array_equal(state[0, 0, 0], Pix.W.arr)
         np.testing.assert_array_equal(state[0, 1, 1], Pix.B.arr)
+
+    def test_legal_actions_phase_1(self):
+        self.env.reset()
+        self.env.step((0, 0, 0))
+        self.env.step((0, 0, 1))
+        actions = self.env.get_legal_actions()
+
+        self.assertEqual(len(actions), 22)
+
+    def test_legal_actions_phase_2_no_kill(self):
+        self.env.reset()
+        self.env.step((0, 0, 0))
+        self.env.step((0, 0, 1))
+        self.env.mens = np.zeros(4)
+        actions = self.env.get_legal_actions()
+
+        self.assertEqual(len(actions), 2)
+
+    def test_legal_actions_phase_1_kill(self):
+        self.env.reset()
+        self.env.step((0, 0, 0))
+        self.env.step((0, 0, 1))
+        self.env.step((0, 0, 3))
+        self.env.step((0, 1, 3))
+        actions = self.env.get_legal_actions()
+
+        self.assertEqual(len(actions), 21)
 
 
 if __name__ == '__main__':

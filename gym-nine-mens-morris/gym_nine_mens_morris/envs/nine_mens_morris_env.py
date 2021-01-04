@@ -64,7 +64,7 @@ legal_moves = {
     (1, 1, 3): [(1, 0, 3), (2, 1, 3), (1, 0, 2), (0, 1, 3)],
 
     (2, 1, 0): [(1, 1, 0), (2, 0, 0), None, (2, 0, 3)],
-    (2, 1, 1): [(2, 1, 1), (1, 1, 1), (2, 0, 1), None],
+    (2, 1, 1): [(2, 0, 0), (1, 1, 1), (2, 0, 1), None],
     (2, 1, 2): [None, (2, 0, 1), (1, 1, 2), (2, 0, 2)],
     (2, 1, 3): [(2, 0, 3), None, (2, 0, 2), (1, 1, 3)],
 
@@ -114,6 +114,7 @@ class NineMensMorrisEnv(gym.Env):
         """
 
         unused, killed = self.mens[self.player.idx]
+        position = tuple(position)
         moved_position = self._get_moved_position(position, move)
         is_phase_1 = unused > 0
         is_illegal = self._is_action_illegal(position, moved_position, is_phase_1, kill_location)
@@ -121,7 +122,7 @@ class NineMensMorrisEnv(gym.Env):
             return (self.board, self.mens), 0, self.is_done, is_illegal
 
         # Update board
-        old_state = self.board.copy(), self.mens.copy()
+        old_state = np.array(self.board), np.array(self.mens)
         if is_phase_1:
             self.board[position] = self.player.arr
             target_position = position
@@ -133,7 +134,7 @@ class NineMensMorrisEnv(gym.Env):
 
         reward = 0
 
-        has_killed = self._has_killed(target_position)
+        has_killed = self._has_killed(target_position, self.board)
         if has_killed:
             if kill_location is None:
                 self.board, self.mens = old_state
@@ -159,28 +160,9 @@ class NineMensMorrisEnv(gym.Env):
         return self.board
 
     def render(self, mode='human', close=False):
-        s = [
-            (0, 0, 0), (0, 1, 1), (0, 0, 1),
-            (1, 0, 0), (1, 1, 1), (1, 0, 1),
-            (2, 0, 0), (2, 1, 1), (2, 0, 1),
-            (0, 1, 0), (1, 1, 0), (2, 1, 0), (0, 1, 2), (1, 1, 2), (2, 1, 2),
-            (2, 0, 3), (2, 1, 3), (2, 0, 3),
-            (1, 0, 3), (1, 1, 3), (1, 0, 2),
-            (0, 0, 3), (0, 1, 3), (0, 0, 2),
-        ]
-        s = [Pix.tup_to_str[tuple(self.board[x])] for x in s]
-        string = f"""
-{s[0]}-----{s[1]}-----{s[2]}
-| {s[3]}---{s[4]}---{s[5]} |
-| | {s[6]}-{s[7]}-{s[8]} | |
-{s[9]}-{s[10]}-{s[11]}   {s[12]}-{s[13]}-{s[14]}
-| | {s[15]}-{s[16]}-{s[17]} | |
-| {s[18]}---{s[19]}---{s[20]} |
-{s[21]}-----{s[22]}-----{s[23]}
-        """
         print(f"Current Player: {self.player.string}")
         print(self.mens)
-        print(string)
+        self.print_board(self.board)
 
     def swap_players(self):
         self.player = self._opponents[self.player]
@@ -213,6 +195,51 @@ class NineMensMorrisEnv(gym.Env):
         self.mens = np.array(mens)
         self.is_done = self._is_done()
 
+    def get_legal_actions(self):
+        """
+        1. If phase 1, return all positions where empty
+        2. find all positions of player that are movable
+        3. If any moved position kills the opponent, then get all opponent positions too
+        """
+
+        opponent_positions = np.transpose((self.board == self.opponent.arr).all(3).nonzero())
+        all_legal_actions = []
+
+        if self.mens[self.player.idx][0] > 0:
+            open_positions = np.transpose((self.board == Pix.S.arr).all(3).nonzero())
+            for position in open_positions:
+                position = tuple(position)
+                board = np.array(self.board)
+                board[position] = self.player.arr
+                has_killed = self._has_killed(position, board)
+                if has_killed:
+                    for opponent_position in opponent_positions:
+                        all_legal_actions.append((position, None, opponent_position))
+                else:
+                    all_legal_actions.append((position, None, None))
+            return all_legal_actions
+
+        player_positions = np.transpose((self.board == self.player.arr).all(3).nonzero())
+
+        for i in range(len(player_positions)):
+            position = tuple(player_positions[i])
+            for j in range(4):
+                if legal_moves[position][j] is None:
+                    continue
+                move = tuple(legal_moves[position][j])
+                if all(self.board[move] == Pix.S.arr):
+                    # Now move to this position and check if killed, then gather all opponent positions
+                    board = np.array(self.board)
+                    board[move] = self.player.arr
+                    board[position] = Pix.S.arr
+                    has_killed = self._has_killed(move, board)
+                    if has_killed:
+                        for opponent_position in opponent_positions:
+                            all_legal_actions.append((position, j, opponent_position))
+                    else:
+                        all_legal_actions.append((position, j, None))
+        return all_legal_actions
+
     # ----- Private Methods ------
 
     def _is_action_illegal(self, position, moved_position, is_phase_1, kill_location=None):
@@ -240,12 +267,16 @@ class NineMensMorrisEnv(gym.Env):
         if kill_location is not None and any(self.board[kill_location] != self.opponent.arr):
             return "Invalid kill_location"
 
-    def _has_killed(self, recent_move):
+    def _is_done(self):
+        return self.mens[2] == 9 or self.mens[3] == 9
+
+    @staticmethod
+    def _has_killed(recent_move, board):
         # Check all 4 edges of recently moved position.
         # If there's a 3 in a line, then remove desired piece.
 
         left, up, right, down = legal_moves[recent_move]
-        left_2, up_2, right_2, down_2 = self.get_neighbours_level_2(recent_move)
+        left_2, up_2, right_2, down_2 = NineMensMorrisEnv._get_neighbours_level_2(recent_move)
 
         positions = [
             (left, right),
@@ -258,14 +289,11 @@ class NineMensMorrisEnv(gym.Env):
 
         for pos1, pos2 in positions:
             if pos1 is not None and pos2 is not None:
-                if all(self.board[pos1] == self.board[recent_move]) and all(self.board[pos2] == self.board[recent_move]):
+                if all(board[pos1] == board[recent_move]) and all(board[pos2] == board[recent_move]):
                     return True
 
-    def _is_done(self):
-        return self.mens[2] == 9 or self.mens[3] == 9
-
     @staticmethod
-    def get_neighbours_level_2(position):
+    def _get_neighbours_level_2(position):
         l, u, r, d = legal_moves[position]
         nones = [None, None, None, None]
         ll = legal_moves.get(l, nones)[0]
@@ -295,3 +323,26 @@ class NineMensMorrisEnv(gym.Env):
         mens = np.array([8, 8, 0, 0])
 
         return board, mens
+
+    @staticmethod
+    def print_board(board):
+        s = [
+            (0, 0, 0), (0, 1, 1), (0, 0, 1),
+            (1, 0, 0), (1, 1, 1), (1, 0, 1),
+            (2, 0, 0), (2, 1, 1), (2, 0, 1),
+            (0, 1, 0), (1, 1, 0), (2, 1, 0), (0, 1, 2), (1, 1, 2), (2, 1, 2),
+            (2, 0, 3), (2, 1, 3), (2, 0, 3),
+            (1, 0, 3), (1, 1, 3), (1, 0, 2),
+            (0, 0, 3), (0, 1, 3), (0, 0, 2),
+        ]
+        s = [Pix.tup_to_str[tuple(board[x])] for x in s]
+        string = f"""
+{s[0]}-----{s[1]}-----{s[2]}
+| {s[3]}---{s[4]}---{s[5]} |
+| | {s[6]}-{s[7]}-{s[8]} | |
+{s[9]}-{s[10]}-{s[11]}   {s[12]}-{s[13]}-{s[14]}
+| | {s[15]}-{s[16]}-{s[17]} | |
+| {s[18]}---{s[19]}---{s[20]} |
+{s[21]}-----{s[22]}-----{s[23]}
+"""
+        print(string)
