@@ -74,6 +74,12 @@ legal_moves = {
 class NineMensMorrisEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
+    class InfoCode:
+        normal = 0
+        bad_action_position = 1
+        bad_move = 2
+        bad_kill_position = 3
+
     def __init__(self):
         # Example when using discrete actions:
         self.action_space = spaces.MultiDiscrete((3, 2, 4, 4))
@@ -119,7 +125,7 @@ class NineMensMorrisEnv(gym.Env):
         is_phase_1 = unused > 0
         is_illegal = self._is_action_illegal(position, moved_position, is_phase_1, kill_location)
         if is_illegal:
-            return (self.board, self.mens), 0, self.is_done, is_illegal
+            return (self.board, self.mens), 0, self.is_done, {'code': is_illegal}
 
         # Update board
         old_state = np.array(self.board), np.array(self.mens)
@@ -138,7 +144,7 @@ class NineMensMorrisEnv(gym.Env):
         if has_killed:
             if kill_location is None:
                 self.board, self.mens = old_state
-                return (self.board, self.mens), reward, self.is_done, "Invalid kill_location"
+                return (self.board, self.mens), reward, self.is_done, {'code': InfoCode.bad_kill_position}
             reward = 10
             self.mens[self.opponent.idx[1]] += 1
             self.board[kill_location] = Pix.S.arr
@@ -149,7 +155,7 @@ class NineMensMorrisEnv(gym.Env):
 
         self.swap_players()
 
-        return (self.board, self.mens), reward, self.is_done, None
+        return (self.board, self.mens), reward, self.is_done, {'code': InfoCode.normal}
 
     def reset(self):
         self.board, self.mens = self._get_empty_state()
@@ -255,17 +261,17 @@ class NineMensMorrisEnv(gym.Env):
 
         if is_phase_1:
             if any(self.board[position] != Pix.S.arr):
-                return "During phase 1, the position must be empty."
+                return InfoCode.bad_action_position  # "During phase 1, the position must be empty."
         else:  # Phase 2
             if any(self.board[position] != self.player.arr):
-                return "During phase 2, the position must be player's piece"
+                return InfoCode.bad_action_position  # "During phase 2, the position must be player's piece"
             if moved_position is None:  # Out of bounds
-                return "Can't move the piece to that position."
+                return InfoCode.bad_move  # "Can't move the piece to that position."
             if any(self.board[moved_position] != Pix.S.arr):  # Is not empty
-                return "The moved position must be empty."
+                return InfoCode.bad_move  # "The moved position must be empty."
 
         if kill_location is not None and any(self.board[kill_location] != self.opponent.arr):
-            return "Invalid kill_location"
+            return InfoCode.bad_kill_position  # "Invalid kill_location"
 
     def _is_done(self):
         return self.mens[2] == 9 or self.mens[3] == 9
