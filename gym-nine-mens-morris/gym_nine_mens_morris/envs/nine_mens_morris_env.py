@@ -352,3 +352,10 @@ class NineMensMorrisEnv(gym.Env):
 {s[21]}-----{s[22]}-----{s[23]}
 """
         print(string)
+
+    @staticmethod
+    def get_move_from_position(action_position, move_position):
+        moves = legal_moves.get(tuple(action_position), [])
+        for i in range(len(moves)):
+            if moves[i] == tuple(move_position):
+                return i
