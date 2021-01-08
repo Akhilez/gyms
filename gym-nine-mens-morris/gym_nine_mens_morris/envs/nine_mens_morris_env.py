@@ -122,7 +122,7 @@ class NineMensMorrisEnv(gym.Env):
         unused, killed = self.mens[self.player.idx]
         position = tuple(position)
         moved_position = self._get_moved_position(position, move)
-        is_phase_1 = unused > 0
+        is_phase_1 = unused > -1
         is_illegal = self._is_action_illegal(position, moved_position, is_phase_1, kill_location)
         if is_illegal:
             return (self.board, self.mens), 0, self.is_done, {'code': is_illegal}
@@ -147,7 +147,7 @@ class NineMensMorrisEnv(gym.Env):
                 return (self.board, self.mens), reward, self.is_done, {'code': self.InfoCode.bad_kill_position}
             reward = 10
             self.mens[self.opponent.idx[1]] += 1
-            self.board[kill_location] = Pix.S.arr
+            self.board[tuple(kill_location)] = Pix.S.arr
 
         self.is_done = self._is_done()
         if self.is_done:
@@ -270,7 +270,7 @@ class NineMensMorrisEnv(gym.Env):
             if any(self.board[moved_position] != Pix.S.arr):  # Is not empty
                 return self.InfoCode.bad_move  # "The moved position must be empty."
 
-        if kill_location is not None and any(self.board[kill_location] != self.opponent.arr):
+        if kill_location is not None and any(self.board[tuple(kill_location)] != self.opponent.arr):
             return self.InfoCode.bad_kill_position  # "Invalid kill_location"
 
     def _is_done(self):
