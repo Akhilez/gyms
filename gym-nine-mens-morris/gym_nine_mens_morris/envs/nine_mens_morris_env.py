@@ -149,8 +149,9 @@ class NineMensMorrisEnv(gym.Env):
             self.mens[self.opponent.idx[1]] += 1
             self.board[tuple(kill_location)] = Pix.S.arr
 
-        self.is_done = self._is_done()
-        if self.is_done:
+        winner = self._winner()
+        self.is_done = bool(winner)
+        if self.player == winner:
             reward = 100
 
         self.swap_players()
@@ -199,7 +200,7 @@ class NineMensMorrisEnv(gym.Env):
         ])
 
         self.mens = np.array(mens)
-        self.is_done = self._is_done()
+        self.is_done = bool(self._winner())
 
     def get_legal_actions(self):
         """
@@ -273,8 +274,12 @@ class NineMensMorrisEnv(gym.Env):
         if kill_location is not None and any(self.board[tuple(kill_location)] != self.opponent.arr):
             return self.InfoCode.bad_kill_position  # "Invalid kill_location"
 
-    def _is_done(self):
-        return self.mens[2] == 9 or self.mens[3] == 9
+    def _winner(self):
+        if self.mens[2] == 9:
+            return Pix.W
+        if self.mens[3] == 9:
+            return Pix.B
+        return False
 
     @staticmethod
     def _has_killed(recent_move, board):
