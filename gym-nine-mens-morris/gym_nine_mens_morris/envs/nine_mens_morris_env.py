@@ -118,7 +118,11 @@ class NineMensMorrisEnv(gym.Env):
         :param kill_location: position tuple where the opponent's piece is removed.
         :return: state, reward, is_done, info
         """
-
+        winner = self._winner()
+        self.is_done = bool(winner)
+        if self.is_done:
+            return (self.board, self.mens), 0, self.is_done, {'code': self.InfoCode.bad_action_position,
+                                                              'winner': winner.string}
         unused, killed = self.mens[self.player.idx]
         position = tuple(position)
         moved_position = self._get_moved_position(position, move)
@@ -149,14 +153,17 @@ class NineMensMorrisEnv(gym.Env):
             self.mens[self.opponent.idx[1]] += 1
             self.board[tuple(kill_location)] = Pix.S.arr
 
+        info = {'code': self.InfoCode.normal}
+
         winner = self._winner()
         self.is_done = bool(winner)
         if self.player == winner:
             reward = 100
+            info['winner'] = winner
 
         self.swap_players()
 
-        return (self.board, self.mens), reward, self.is_done, {'code': self.InfoCode.normal}
+        return (self.board, self.mens), reward, self.is_done, info
 
     def reset(self):
         self.board, self.mens = self._get_empty_state()
