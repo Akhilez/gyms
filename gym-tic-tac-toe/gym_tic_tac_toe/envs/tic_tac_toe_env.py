@@ -51,7 +51,6 @@ class TicTacToeEnv(gym.Env):
         self.observation_space = spaces.Box(low=0, high=1, shape=(3, 3), dtype=np.uint8)
 
         self.player = Pix.O  # Current player
-        self.rewards_for = Pix.X  # Which player is this reward for?
 
         self.state = None
         self.is_done = False
@@ -64,7 +63,7 @@ class TicTacToeEnv(gym.Env):
 
         # Check if the action is LEGAL or not
         if any(self.state[i][j] != Pix.S.arr):
-            return None, None, None, "Illegal action."
+            return None, None, None, {'code': 1}
 
         self.state[i][j] = self.player.arr
         self.count += 1
@@ -72,7 +71,7 @@ class TicTacToeEnv(gym.Env):
 
         reward, won = self._post_step()
 
-        return self.state, reward, self.is_done, {'won': won}
+        return self.state, reward, self.is_done, {'code': 0, 'won': won}
 
     def reset(self):
         self.state = self._get_empty_state()
@@ -120,11 +119,12 @@ class TicTacToeEnv(gym.Env):
         won = self._who_won()
         if won is not None:
             self.is_done = True
-            won = won.string == self.rewards_for.string
-            if won:
+            won = won.string
+            if won == self.player.string:
                 reward = 100
-        else:
-            self.swap_players()
+            else:
+                reward = -100
+        self.swap_players()
 
         return reward, won
 
