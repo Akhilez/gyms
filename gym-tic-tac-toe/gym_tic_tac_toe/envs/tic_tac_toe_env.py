@@ -69,17 +69,10 @@ class TicTacToeEnv(gym.Env):
         self.state[i][j] = self.player.arr
         self.count += 1
         self.is_done = self.count >= 9
-        reward = 0
 
-        won = self._who_won()
+        reward, won = self._post_step()
 
-        if won is not None:
-            self.is_done = True
-            reward = 100 if won.string == self.rewards_for.string else -100
-
-        self.swap_players()
-
-        return self.state, reward, self.is_done, None
+        return self.state, reward, self.is_done, {'won': won}
 
     def reset(self):
         self.state = self._get_empty_state()
@@ -121,6 +114,19 @@ class TicTacToeEnv(gym.Env):
         return (state.reshape(-1, 3).argmax(1) == 0).nonzero()[0]
 
     # ------- Private methods --------------
+
+    def _post_step(self):
+        reward = 0
+        won = self._who_won()
+        if won is not None:
+            self.is_done = True
+            won = won.string == self.rewards_for.string
+            if won:
+                reward = 100
+        else:
+            self.swap_players()
+
+        return reward, won
 
     @staticmethod
     def _get_empty_state():
