@@ -22,7 +22,7 @@ class Pix:
         idx = np.array([1, 3])
 
     tup_to_str = {
-        S.tup: S.string,
+        S.tup: '•',  # S.string,
         W.tup: W.string,
         B.tup: B.string
     }

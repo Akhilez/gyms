@@ -94,7 +94,7 @@ class TestNineMensMorris(unittest.TestCase):
 
         _, _, is_done, _ = self.env.step((0, 0, 0))
 
-        self.assertFalse(is_done)
+        self.assertTrue(is_done)
 
     def test_not_killed(self):
         state_string = [
