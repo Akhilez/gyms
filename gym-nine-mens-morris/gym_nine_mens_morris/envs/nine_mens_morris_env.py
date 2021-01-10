@@ -254,6 +254,10 @@ class NineMensMorrisEnv(gym.Env):
                         all_legal_actions.append((position, j, None))
         return all_legal_actions
 
+    def is_phase_1(self):
+        unused, _ = self.mens[self.player.idx]
+        return unused > -1
+
     # ----- Private Methods ------
 
     def _is_action_illegal(self, position, moved_position, is_phase_1, kill_location=None):
