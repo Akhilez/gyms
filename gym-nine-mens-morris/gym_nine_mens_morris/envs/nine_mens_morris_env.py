@@ -126,7 +126,7 @@ class NineMensMorrisEnv(gym.Env):
         unused, killed = self.mens[self.player.idx]
         position = tuple(position)
         moved_position = self._get_moved_position(position, move)
-        is_phase_1 = unused > -1
+        is_phase_1 = unused > 0
         is_illegal = self._is_action_illegal(position, moved_position, is_phase_1, kill_location)
         if is_illegal:
             return (self.board, self.mens), 0, self.is_done, {'code': is_illegal}
@@ -256,7 +256,7 @@ class NineMensMorrisEnv(gym.Env):
 
     def is_phase_1(self):
         unused, _ = self.mens[self.player.idx]
-        return unused > -1
+        return unused > 0
 
     # ----- Private Methods ------
 
@@ -342,7 +342,7 @@ class NineMensMorrisEnv(gym.Env):
         board = np.zeros((3, 2, 4, 3), dtype=np.uint8)
         board[:, :, :, 0] = 1
 
-        mens = np.array([8, 8, 0, 0])
+        mens = np.array([9, 9, 0, 0])
 
         return board, mens
 
