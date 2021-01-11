@@ -157,9 +157,10 @@ class NineMensMorrisEnv(gym.Env):
 
         winner = self._winner()
         self.is_done = bool(winner)
-        if self.player == winner:
-            reward = 100
-            info['winner'] = winner
+        if self.is_done:
+            if self.player == winner:
+                reward = 100
+            info['winner'] = winner.string
 
         self.swap_players()
 
@@ -287,9 +288,9 @@ class NineMensMorrisEnv(gym.Env):
 
     def _winner(self):
         if self.mens[2] == 9:
-            return Pix.W
-        if self.mens[3] == 9:
             return Pix.B
+        if self.mens[3] == 9:
+            return Pix.W
         return False
 
     @staticmethod
