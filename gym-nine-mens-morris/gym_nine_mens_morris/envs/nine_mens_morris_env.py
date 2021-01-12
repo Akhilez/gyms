@@ -111,22 +111,27 @@ class NineMensMorrisEnv(gym.Env):
         else:
             raise Exception("Player must be either Pix.W or Pix.O")
 
-    def step(self, position, move=None, kill_location=None):
+    def step(self, action):
         """
-        :param position: a 3,2,4 tuple
-        :param move: a scalar
-        :param kill_location: position tuple where the opponent's piece is removed.
+        :param action: (tuple)
+        0: position: a 3,2,4 tuple
+        1: move: a scalar
+        2: kill_location: position tuple where the opponent's piece is removed.
         :return: state, reward, is_done, info
         """
+        position, move, kill_location = action
+
         winner = self._winner()
         self.is_done = bool(winner)
         if self.is_done:
             return (self.board, self.mens), 0, self.is_done, {'code': self.InfoCode.bad_action_position,
                                                               'winner': winner.string}
-        unused, killed = self.mens[self.player.idx]
+
         position = tuple(position)
+        unused, killed = self.mens[self.player.idx]
         moved_position = self._get_moved_position(position, move)
         is_phase_1 = unused > 0
+
         is_illegal = self._is_action_illegal(position, moved_position, is_phase_1, kill_location)
         if is_illegal:
             return (self.board, self.mens), 0, self.is_done, {'code': is_illegal}
@@ -135,16 +140,14 @@ class NineMensMorrisEnv(gym.Env):
         old_state = np.array(self.board), np.array(self.mens)
         if is_phase_1:
             self.board[position] = self.player.arr
-            target_position = position
             self.mens[self.player.idx[0]] -= 1  # Unused will be reduced by 1
         else:
             self.board[position] = Pix.S.arr
             self.board[moved_position] = self.player.arr
-            target_position = moved_position
 
         reward = 0
 
-        has_killed = self._has_killed(target_position, self.board)
+        has_killed = self._has_killed(position if is_phase_1 else moved_position, self.board)
         if has_killed:
             if kill_location is None:
                 self.board, self.mens = old_state
