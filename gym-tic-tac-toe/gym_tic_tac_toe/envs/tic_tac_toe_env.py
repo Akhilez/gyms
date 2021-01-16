@@ -71,7 +71,7 @@ class TicTacToeEnv(gym.Env):
 
         reward, won = self._post_step()
 
-        return self.state, reward, self.is_done, {'code': 0, 'won': won}
+        return self.state, reward, self.is_done, {'code': 0, 'winner': won}
 
     def reset(self):
         self.state = self._get_empty_state()
