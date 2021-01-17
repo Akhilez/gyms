@@ -23,11 +23,9 @@ class TicTacToeEnvV2(gym.Env):
             return self.state, reward, self.done, {'illegal_action': True}
 
         self.state[action] = self.turn
-        self.turn *= -1
-
         self.done = self._is_winner()
         reward = 10 if self.done else -1
-
+        self.turn *= -1
         return self.state, reward, self.done, {}
 
     def reset(self):
