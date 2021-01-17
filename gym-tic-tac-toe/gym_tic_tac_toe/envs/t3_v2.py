@@ -15,6 +15,7 @@ class TicTacToeEnvV2(gym.Env):
         self.turn = None
         self.state = None
         self.done = None
+        self.winner = None
 
     def step(self, action: int):
         if self.state[action] != 0:
@@ -23,8 +24,11 @@ class TicTacToeEnvV2(gym.Env):
             return self.state, reward, self.done, {'illegal_action': True}
 
         self.state[action] = self.turn
-        self.done = self._is_winner()
-        reward = 10 if self.done else -1
+        is_winner = self._is_winner()
+        reward = 10 if is_winner else -1
+        if is_winner:
+            self.winner = self.turn
+        self.done = is_winner or self._is_done()
         self.turn *= -1
         return self.state, reward, self.done, {}
 
@@ -34,7 +38,19 @@ class TicTacToeEnvV2(gym.Env):
         self.done = False
 
     def render(self, mode='human'):
-        print(self.state.reshape(3, 3))
+        s = self.state.reshape(3, 3)
+        for i in range(3):
+            for j in range(3):
+                piece = s[i][j]
+                if piece == 1:
+                    piece = 'X'
+                elif piece == -1:
+                    piece = 'O'
+                else:
+                    piece = '.'
+                print(piece, end=' ')
+            print()
+        print(f'Next: {self.turn}')
 
     def close(self):
         pass
@@ -66,3 +82,6 @@ class TicTacToeEnvV2(gym.Env):
             return True
 
         return False
+
+    def _is_done(self):
+        return len(np.nonzero(self.state == 0)[0]) == 0
