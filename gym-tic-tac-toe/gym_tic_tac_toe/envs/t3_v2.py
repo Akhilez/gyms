@@ -24,11 +24,11 @@ class TicTacToeEnvV2(gym.Env):
             return self.state, reward, self.done, {'illegal_action': True}
 
         self.state[action] = self.turn
-        is_winner = self._is_winner()
+        is_winner = self.is_winner()
         reward = 10 if is_winner else -1
         if is_winner:
             self.winner = self.turn
-        self.done = is_winner or self._is_done()
+        self.done = is_winner or self.is_done()
         self.turn *= -1
         return self.state, reward, self.done, {}
 
@@ -58,10 +58,15 @@ class TicTacToeEnvV2(gym.Env):
     def seed(self, seed=None):
         pass
 
-    def get_legal_actions(self):
-        return np.nonzero(self.state == 0)[0]
+    def get_legal_actions(self, state=None):
+        state = self.state if state is None else state
+        return np.nonzero(state == 0)[0]
 
-    def _is_winner(self):
+    def is_done(self, state=None):
+        state = self.state if state is None else state
+        return len(np.nonzero(state == 0)[0]) == 0
+
+    def is_winner(self):
         s = self.state.reshape((3, 3))
         winner = np.ones(3) * 3 * self.turn
 
@@ -82,6 +87,3 @@ class TicTacToeEnvV2(gym.Env):
             return True
 
         return False
-
-    def _is_done(self):
-        return len(np.nonzero(self.state == 0)[0]) == 0
