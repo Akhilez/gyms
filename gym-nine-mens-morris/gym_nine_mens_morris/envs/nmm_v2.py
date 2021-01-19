@@ -122,7 +122,23 @@ class NineMensMorrisEnvV2(gym.Env):
         self.done = False
 
     def render(self, mode='human'):
-        print(self.board)
+        s = []
+        for x in self.board:
+            if x == 0:
+                s.append('•')
+            elif x == 1:
+                s.append('X')
+            else:
+                s.append('O')
+        print(f"""
+{s[0]}-----{s[1]}-----{s[2]}
+| {s[8]}---{s[9]}---{s[10]} |
+| | {s[16]}-{s[17]}-{s[18]} | |
+{s[7]}-{s[15]}-{s[23]}   {s[19]}-{s[11]}-{s[3]}
+| | {s[22]}-{s[21]}-{s[20]} | |
+| {s[14]}---{s[13]}---{s[12]} |
+{s[6]}-----{s[5]}-----{s[4]}
+""")
         print(self.mens[1:])
         print(f'Turn: {self.turn}')
 
