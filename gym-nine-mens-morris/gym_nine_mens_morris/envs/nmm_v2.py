@@ -94,8 +94,7 @@ class NineMensMorrisEnvV2(gym.Env):
             self.winner = -self.turn
             return self.state, -100, self.done, {is_illegal_msg: True}
 
-        is_phase_1 = self.mens[self.turn][0] > 0
-        if is_phase_1:
+        if self.is_phase_1():
             self.board[action[0]] = self.turn
             target = action[0]
             self.mens[self.turn][0] -= 1
@@ -145,6 +144,9 @@ class NineMensMorrisEnvV2(gym.Env):
     def get_legal_actions(self):
         return self.get_legal_actions_(self.state, self.turn)
 
+    def is_phase_1(self):
+        return self.is_phase_1_(self.state, self.turn)
+
     @staticmethod
     def is_illegal(state, turn, action):
         """
@@ -167,6 +169,10 @@ class NineMensMorrisEnvV2(gym.Env):
         if action[2] is not None:
             if state[0][action[2]] != -turn:
                 return 'illegal kill'
+
+    @staticmethod
+    def is_phase_1_(state, turn):
+        return state[1][turn][0] > 0
 
     @staticmethod
     def is_done(state):
@@ -195,7 +201,7 @@ class NineMensMorrisEnvV2(gym.Env):
         all_actions = []
         board = state[0]
         opponents = np.nonzero(board == -turn)[0]
-        if state[1][turn][0] > 0:  # Phase 1
+        if NineMensMorrisEnvV2.is_phase_1_(state, turn):  # Phase 1
             actions = np.nonzero(board == 0)[0]
             for action in actions:
                 state_ = copy.deepcopy(state)
@@ -205,6 +211,8 @@ class NineMensMorrisEnvV2(gym.Env):
             return all_actions, opponents
 
         for pos in np.nonzero(board == turn)[0]:
+            moves = []
+            kills = []
             for i in range(4):
                 moved = moved_positions[pos][i]
                 if moved is not None and board[moved] == 0:
@@ -212,5 +220,8 @@ class NineMensMorrisEnvV2(gym.Env):
                     state_[0][pos] = 0
                     state_[0][moved] = turn
                     has_killed = NineMensMorrisEnvV2.has_killed(state_, moved)
-                    all_actions.append([pos, i, has_killed])
+                    moves.append(i)
+                    kills.append(has_killed)
+            if len(moves) > 0:
+                all_actions.append([pos, moves, kills])
         return all_actions, opponents
