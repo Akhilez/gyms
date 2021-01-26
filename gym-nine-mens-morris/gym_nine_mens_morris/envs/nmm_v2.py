@@ -83,6 +83,8 @@ class NineMensMorrisEnvV2(gym.Env):
         :param action: a tuple of shapes ((4), (1), (4))
         :return: state, reward, done, info
         """
+        # TODO: Can't remove opponent's mill piece unless ther are the only pieces.
+        # TODO: You win if opponent has 2 pieces left.
         self.winner = self.is_done(self.state)
         self.done = bool(self.winner)
         if self.done:
