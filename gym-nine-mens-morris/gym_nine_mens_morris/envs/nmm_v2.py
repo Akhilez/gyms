@@ -83,8 +83,6 @@ class NineMensMorrisEnvV2(gym.Env):
         :param action: a tuple of shapes ((4), (1), (4))
         :return: state, reward, done, info
         """
-        # TODO: Can't remove opponent's mill piece unless ther are the only pieces.
-        # TODO: You win if opponent has 2 pieces left.
         self.winner = self.is_done(self.state)
         self.done = bool(self.winner)
         if self.done:
@@ -169,7 +167,8 @@ class NineMensMorrisEnvV2(gym.Env):
             if moved is None or state[0][moved] != 0:
                 return 'illegal_move'
         if action[2] is not None:
-            if state[0][action[2]] != -turn:
+            if state[0][action[2]] != -turn or (
+                    len(state[0][state[0] == -turn]) > 3 and NineMensMorrisEnvV2.has_killed(state, action[2])):
                 return 'illegal kill'
 
     @staticmethod
@@ -184,11 +183,28 @@ class NineMensMorrisEnvV2(gym.Env):
         p = 1
         n = -1
 
-        if mens[n][1] == 9 and len(board[board == n]) == 0:
+        if mens[n][1] == 7 and len(board[board == n]) == 2:
             return p
-        if mens[p][1] == 9 and len(board[board == p]) == 0:
+        if mens[p][1] == 7 and len(board[board == p]) == 2:
             return n
+
+        if not NineMensMorrisEnvV2.is_phase_1_(state, p):
+            if not NineMensMorrisEnvV2.is_able_to_move(board, p):
+                return n
+        if not NineMensMorrisEnvV2.is_phase_1_(state, n):
+            if not NineMensMorrisEnvV2.is_able_to_move(board, n):
+                return p
+
         return 0
+
+    @staticmethod
+    def is_able_to_move(board, turn):
+        positions = np.nonzero(board == turn)[0]
+        for position in positions:
+            moved_position = moved_positions[position]
+            if any([board[i] == 0 for i in moved_position if i is not None]):
+                return True
+        return False
 
     @staticmethod
     def has_killed(state, recent_move):
@@ -202,7 +218,7 @@ class NineMensMorrisEnvV2(gym.Env):
     def get_legal_actions_(state, turn):
         all_actions = []
         board = state[0]
-        opponents = np.nonzero(board == -turn)[0]
+        opponents = NineMensMorrisEnvV2.get_killable_positions(board, turn)
         if NineMensMorrisEnvV2.is_phase_1_(state, turn):  # Phase 1
             actions = np.nonzero(board == 0)[0]
             for action in actions:
@@ -227,3 +243,8 @@ class NineMensMorrisEnvV2(gym.Env):
             if len(moves) > 0:
                 all_actions.append([pos, moves, kills])
         return all_actions, opponents
+
+    @staticmethod
+    def get_killable_positions(board, turn):
+        # TODO: Return only killable opponent - not ones in a mill.
+        return np.nonzero(board == -turn)[0]
