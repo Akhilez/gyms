@@ -73,6 +73,10 @@ class NineMensMorrisEnvV2(gym.Env):
     def state(self):
         return self.board, self.mens
 
+    @state.setter
+    def state(self, state):
+        self.board, self.mens = state
+
     def step(self, action: tuple):
         """
         0. If is done, return
@@ -115,8 +119,7 @@ class NineMensMorrisEnvV2(gym.Env):
         return self.state, reward, self.done, {}
 
     def reset(self):
-        self.board = np.zeros(24)
-        self.mens = [None, [9, 0], [9, 0]]
+        self.board, self.mens = self.get_empty_state()
         self.turn = 1
         self.done = False
 
@@ -146,6 +149,10 @@ class NineMensMorrisEnvV2(gym.Env):
 
     def is_phase_1(self):
         return self.is_phase_1_(self.state, self.turn)
+
+    @staticmethod
+    def get_empty_state():
+        return np.zeros(24), [None, [9, 0], [9, 0]]
 
     @staticmethod
     def is_illegal(state, turn, action):
