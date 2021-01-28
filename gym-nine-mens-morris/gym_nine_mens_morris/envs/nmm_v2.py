@@ -218,7 +218,7 @@ class NineMensMorrisEnvV2(gym.Env):
     def get_legal_actions_(state, turn):
         all_actions = []
         board = state[0]
-        opponents = NineMensMorrisEnvV2.get_killable_positions(board, turn)
+        opponents = NineMensMorrisEnvV2.get_killable_positions(state, turn)
         if NineMensMorrisEnvV2.is_phase_1_(state, turn):  # Phase 1
             actions = np.nonzero(board == 0)[0]
             for action in actions:
@@ -245,6 +245,10 @@ class NineMensMorrisEnvV2(gym.Env):
         return all_actions, opponents
 
     @staticmethod
-    def get_killable_positions(board, turn):
-        # TODO: Return only killable opponent - not ones in a mill.
-        return np.nonzero(board == -turn)[0]
+    def get_killable_positions(state, turn):
+        all_opponents = np.nonzero(state[0] == -turn)[0]
+        killable_opponents = []
+        for opponent in all_opponents:
+            if not NineMensMorrisEnvV2.has_killed(state, opponent):
+                killable_opponents.append(opponent)
+        return np.array(killable_opponents)
