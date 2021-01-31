@@ -266,11 +266,14 @@ class NineMensMorrisEnvV2(gym.Env):
         # Actions: [(position, [move1, move1], [bool, bool]),]
         flattened_actions = []
         for action_tup in actions[0]:
-            if action_tup[1] is not None and action_tup[1]:
-                for i in range(len(action_tup[1])):
-                    for j in range(len(action_tup[2])):
-                        kill = actions[1][j] if action_tup[2][j] else None
-                        flattened_actions.append((action_tup[0], action_tup[1][i], kill))
+            if action_tup[1] is not None and len(action_tup[1]) > 0:  # If moves exist
+                assert len(action_tup[1]) == len(action_tup[2]), "Moves and kill booleans must be of same length"
+                for i in range(len(action_tup[1])):  # For each move
+                    if not action_tup[2][i]:  # If not killed
+                        flattened_actions.append((action_tup[0], action_tup[1][i], None))
+                    elif len(actions[1]) > 0:  # If killed, then add all kill moves
+                        for kill in actions[1]:
+                            flattened_actions.append((action_tup[0], action_tup[1][i], kill))
             else:
                 if action_tup[2] and len(actions[1]) > 0:
                     for kill in actions[1]:
