@@ -1,4 +1,5 @@
 import copy
+from typing import Tuple, List
 
 import gym
 import numpy as np
@@ -259,3 +260,21 @@ class NineMensMorrisEnvV2(gym.Env):
             if not NineMensMorrisEnvV2.has_killed(state, opponent):
                 killable_opponents.append(opponent)
         return np.array(killable_opponents)
+
+    @staticmethod
+    def flatten_actions(actions: Tuple[List[Tuple], List[int]]):
+        # Actions: [(position, [move1, move1], [bool, bool]),]
+        flattened_actions = []
+        for action_tup in actions[0]:
+            if action_tup[1] is not None and action_tup[1]:
+                for i in range(len(action_tup[1])):
+                    for j in range(len(action_tup[2])):
+                        kill = actions[1][j] if action_tup[2][j] else None
+                        flattened_actions.append((action_tup[0], action_tup[1][i], kill))
+            else:
+                if action_tup[2] and len(actions[1]) > 0:
+                    for kill in actions[1]:
+                        flattened_actions.append((action_tup[0], None, kill))
+                else:
+                    flattened_actions.append((action_tup[0], None, None))
+        return flattened_actions
