@@ -165,7 +165,7 @@ class NineMensMorrisEnvV2(gym.Env):
             c. check if moved position is occupied
         3. if kill is given, check if that position is -turn's
         """
-        if state[1][turn][0] > 0:  # Phase 1
+        if NineMensMorrisEnvV2.is_phase_1_(state, turn):  # Phase 1
             if state[0][action[0]] != 0:
                 return 'position_not_empty'
         else:
