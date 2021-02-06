@@ -27,9 +27,14 @@ class GridWorldEnv(gym.Env):
 
     def reset(self):
         self.env = Gridworld(size=self.size, mode=self.mode)
+        self.done = False
+        self.won = False
+        return self.state
 
     def render(self, mode='human'):
+        print()
         print(self.env.board.render())
+        print()
 
     @staticmethod
     def get_legal_actions():
