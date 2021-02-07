@@ -23,7 +23,7 @@ class GridWorldEnv(gym.Env):
         reward = self.env.reward()
         self.done = reward ** 2 == 100
         self.won = reward == 10
-        return self.env.board, reward, self.done, {}
+        return self.env.board.render_np(), reward, self.done, {}
 
     def reset(self):
         self.env = Gridworld(size=self.size, mode=self.mode)
