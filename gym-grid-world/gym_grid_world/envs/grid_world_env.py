@@ -18,6 +18,13 @@ class GridWorldEnv(gym.Env):
     def state(self):
         return self.env.board.render_np()
 
+    @state.setter
+    def state(self, positions):
+        self.env.board.components['Player'].pos = positions['player']  # Row, Column
+        self.env.board.components['Goal'].pos = positions['win']
+        self.env.board.components['Pit'].pos = positions['pit']
+        self.env.board.components['Wall'].pos = positions['wall']
+
     def step(self, action: int):
         self.env.makeMove(self.actions[action])
         reward = self.env.reward()
