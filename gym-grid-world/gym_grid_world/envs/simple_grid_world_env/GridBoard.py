@@ -6,7 +6,6 @@ def randPair(s, e):
 
 
 class BoardPiece:
-
     def __init__(self, name, code, pos):
         self.name = name  # name of the piece
         self.code = code  # an ASCII character to display on the board
@@ -14,7 +13,6 @@ class BoardPiece:
 
 
 class BoardMask:
-
     def __init__(self, name, mask, code):
         self.name = name
         self.mask = mask
@@ -30,7 +28,6 @@ def zip_positions2d(positions):  # positions is tuple of two arrays
 
 
 class GridBoard:
-
     def __init__(self, size=4):
         self.size = size  # Board dimensions, e.g. 4 x 4
         self.components = {}  # name : board piece
@@ -55,12 +52,12 @@ class GridBoard:
             self.components[name].pos = pos
 
     def delPiece(self, name):
-        del self.components['name']
+        del self.components["name"]
 
     def render(self):
-        dtype = '<U2'
+        dtype = "<U2"
         displ_board = np.zeros((self.size, self.size), dtype=dtype)
-        displ_board[:] = ' '
+        displ_board[:] = " "
 
         for name, piece in self.components.items():
             displ_board[piece.pos] = piece.code
@@ -75,12 +72,12 @@ class GridBoard:
         displ_board = np.zeros((num_pieces, self.size, self.size), dtype=np.uint8)
         layer = 0
         for name, piece in self.components.items():
-            pos = (layer,) + piece.pos
+            pos = (layer,) + tuple(piece.pos)
             displ_board[pos] = 1
             layer += 1
 
         for name, mask in self.masks.items():
-            x, y = self.masks['boundary'].get_positions()
+            x, y = self.masks["boundary"].get_positions()
             z = np.repeat(layer, len(x))
             a = (z, x, y)
             displ_board[a] = 1
