@@ -38,9 +38,12 @@ class GridWorldEnv(gym.Env):
         return self.state
 
     def render(self, mode="human"):
-        print()
-        print(self.env.board.render())
-        print()
+        if mode == 'human':
+            print()
+            print(self.env.board.render())
+            print()
+        if mode == 'rgb_array':
+            return self.get_rgb_array(self)
 
     @staticmethod
     def get_legal_actions():
@@ -71,3 +74,16 @@ class GridWorldEnv(gym.Env):
         positions = GridWorldEnv.get_positions_(state)
         player = positions["player"]
         return player == positions["win"]
+
+    @staticmethod
+    def get_rgb_array(env):
+        player, goal, pit, wall = [env.env.board.components[key].pos for key in ('Player', 'Goal', 'Pit', 'Wall')]
+
+        image = np.zeros((env.size, env.size, 3))
+
+        image[player[0], player[1]] = np.array([0, 0, 255])
+        image[goal[0], goal[1]] = np.array([0, 255, 0])
+        image[pit[0], pit[1]] = np.array([255, 0, 0])
+        image[wall[0], wall[1]] = np.array([150, 150, 150])
+
+        return image
