@@ -6,3 +6,4 @@ Contains environments for
 
  - Tic Tac Toe
  - Nine Men's Morris / Mills
+ - SrYvl
