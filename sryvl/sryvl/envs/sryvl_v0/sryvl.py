@@ -2,6 +2,7 @@ from typing import Tuple, List
 from gym import Env
 from gym.spaces import Discrete, Box
 import numpy as np
+from functools import reduce
 
 np.set_printoptions(linewidth=10000, threshold=np.inf)
 
@@ -48,18 +49,20 @@ class SrYvlLvl0Env(Env):
 
     def __init__(
             self,
-            world_size=50,
+            world_size=20,
             max_agent_size=2,
-            food_growth_density=2,
-            food_growth_radius=5,
-            food_expiry_period=500,
-            initial_food_density=0.01,
-            agent_growth_rate=0.01,
-            shrink_rate_min=0.0005,
-            shrink_rate_max=0.001,
+            food_growth_density=3,
+            food_growth_radius=2,
+            food_expiry_period=50,
+            initial_food_density=0.2,
+            agent_growth_rate=0.15,
+            shrink_rate_min=0.001,
+            shrink_rate_max=0.01,
             movement_shrink_penalty=5,
-            observation_radius=5,
+            observation_radius=3,
             size_threshold_to_jump=1.5,
+            terrain_resolution=8,
+            terrain_intensity=0.8,
     ):
         super(SrYvlLvl0Env, self).__init__()
 
@@ -75,6 +78,8 @@ class SrYvlLvl0Env(Env):
         self.movement_shrink_penalty = movement_shrink_penalty
         self.observation_radius = observation_radius
         self.size_threshold_to_jump = size_threshold_to_jump
+        self.terrain_resolution = terrain_resolution
+        self.terrain_intensity = terrain_intensity
 
         self.agent_size = 1
         self.agent_position = [0, 0]
@@ -89,10 +94,11 @@ class SrYvlLvl0Env(Env):
         self.reset()
 
     def render(self, mode='human'):
-        if mode == 'world_console':
+        if mode in ('world_console', 'observable_console'):
             print(self.agent_size)
+            world = self.observe() if mode != 'world_console' else self.world
 
-            state = '\n'.join([''.join(i) for i in self.world.astype(str)])
+            state = '\n'.join([' '.join(i) for i in world.astype(str)])
             state = state.replace('4', '□')  # Boundary
             state = state.replace('3', '■')  # Terrain
             state = state.replace('2', '•')  # Food
@@ -102,18 +108,14 @@ class SrYvlLvl0Env(Env):
 
             print(state)
 
-        elif mode == 'observable_console':
-            print(self.agent_size)
-
-            state = '\n'.join([' '.join(i) for i in self.observe().astype(str)])
-            state = state.replace('4', '□')  # Boundary
-            state = state.replace('3', '■')  # Terrain
-            state = state.replace('2', '•')  # Food
-            state = state.replace('1', '🔺')  # Player
-            state = state.replace('0', ' ')  # Nothing
-            state = state.replace('.', '')
-
-            print(state)
+        elif mode in ('observable_rgb_array', 'world_rgb_array', 'rgb_array'):
+            world = self.observe() if mode != 'world_rgb_array' else self.world
+            img = np.ones((len(world), len(world), 3), dtype=int) * 255
+            self.fill_indices(img, self.find_indices(world, BOUNDARY), [100, 100, 100])
+            self.fill_indices(img, self.find_indices(world, TERRAIN), [150, 150, 150])
+            self.fill_indices(img, self.find_indices(world, FOOD), [0, 255, 0])
+            self.fill_indices(img, self.find_indices(world, AGENT), [255, 0, 0])
+            return img
 
         else:
             print(self.agent_size)
@@ -172,12 +174,12 @@ class SrYvlLvl0Env(Env):
         self.agent_size = 1
 
         side = self.world_size + (self.observation_radius * 2)
-        self.world = np.zeros((side, side))
+        self.world = np.zeros((side, side), dtype=int)
 
         food_positions = self.get_initial_food_positions(side, self.initial_food_density)
         self.fill_indices(self.world, food_positions, FOOD)
 
-        self.terrain = self.make_terrain(side)
+        self.terrain = self.make_terrain(side, self.terrain_resolution, self.terrain_intensity)
         self.fill_indices(self.world, self.terrain, TERRAIN)
 
         self.boundary_indices = self.make_boundary(side, self.observation_radius)
@@ -187,11 +189,13 @@ class SrYvlLvl0Env(Env):
             Food(pos, self.food_expiry_period)
             for pos in self.find_indices(self.world, FOOD)
         ]
+        for food in self.foods:
+            food.age = np.random.randint(self.food_expiry_period)
 
         self.agent_position = self._get_agent_initial_position()
         self.fill_indices(self.world, [self.agent_position], AGENT)
 
-        self.legal_actions = np.ones(self.action_space.n)
+        self.legal_actions = self._find_legal_actions()
         self.done = False
 
         return self.observe()
@@ -201,6 +205,15 @@ class SrYvlLvl0Env(Env):
         y = self.agent_position[0]
         x = self.agent_position[1]
         x0, y0, x1, y1 = x - r, y - r, x + r + 1, y + r + 1
+
+        """
+        planes:
+        1: Boundary
+        2: Terrain
+        3: Food Ages
+        4: Player Health
+        """
+
         return self.world[y0: y1, x0: x1]
 
     def sample_action(self):
@@ -210,31 +223,42 @@ class SrYvlLvl0Env(Env):
 
     def draw_env(self) -> np.array:
         side = self.world_size + (self.observation_radius * 2)
-        self.world = np.ones((side, side)) * NOTHING
+        self.world = np.ones((side, side), dtype=int) * NOTHING
         self.fill_indices(self.world, [f.position for f in self.foods], FOOD)
         self.fill_indices(self.world, self.terrain, TERRAIN)
         self.fill_indices(self.world, self.boundary_indices, BOUNDARY)
         self.fill_indices(self.world, [self.agent_position], AGENT)
+
+    def _observe_food_ages(self):
+        ages = np.zeros((len(self.world), len(self.world)))
+        for food in self.foods:
+            ages[tuple(food.position)] = food.age / self.food_expiry_period
+        return ages
 
     def _grow_more_food(self):
         more_foods = []
         for food in self.foods:
             growth_window = self._get_food_growth_window(food)
             if not self._enough_food_already_exists_nearby(growth_window):
-                chance = food.age / (self.food_expiry_period * 2) > np.random.rand()
+                chance = food.age / (self.food_expiry_period ** 1.5) > np.random.rand()
                 if chance:
-                    more_foods.append(
-                        Food(
-                            self._get_random_position_nearby(growth_window),
-                            self.food_expiry_period,
+                    random_position = self._get_random_position_nearby(growth_window)
+                    # Converting from window indices to world indices
+                    random_position[0] += food.position[0] - self.food_growth_radius
+                    random_position[1] += food.position[1] - self.food_growth_radius
+                    if random_position is not None:
+                        more_foods.append(
+                            Food(
+                                random_position,
+                                self.food_expiry_period,
+                            )
                         )
-                    )
         self.foods.extend(more_foods)
 
     def _enough_food_already_exists_nearby(self, growth_window):
         """num_food in radius < food_growth_density"""
         num_food = len(SrYvlLvl0Env.find_indices(growth_window, FOOD)) - 1
-        return num_food < self.food_growth_density
+        return num_food >= self.food_growth_density
 
     def _get_food_growth_window(self, food):
         y = food.position[0]
@@ -250,7 +274,8 @@ class SrYvlLvl0Env(Env):
     @staticmethod
     def _get_random_position_nearby(growth_window):
         empty_positions = SrYvlLvl0Env.find_indices(growth_window, NOTHING)
-        return empty_positions[np.random.choice(len(empty_positions))]
+        if len(empty_positions) > 0:
+            return empty_positions[np.random.choice(len(empty_positions))]
 
     def _grow_agent(self):
         new_size = self.agent_size + self.agent_growth_rate
@@ -261,8 +286,9 @@ class SrYvlLvl0Env(Env):
                     del self.foods[i]
 
     def _clear_expired_foods(self):
-        self.foods = [food for food in self.foods if food.position is not None]
+        self.foods = [food for food in self.foods if not food.expired]
         self.fill_indices(self.world, self.find_indices(self.world, FOOD), NOTHING)
+        self.fill_indices(self.world, [f.position for f in self.foods], FOOD)
 
     def _find_legal_actions(self):
         """
@@ -312,14 +338,15 @@ class SrYvlLvl0Env(Env):
         return np.array((world == category).nonzero()).T
 
     @staticmethod
-    def make_terrain(world_size) -> List[Tuple[int, int]]:
+    def make_terrain(world_size, terrain_resolution, terrain_intensity) -> List[Tuple[int, int]]:
         """
         Add perlin noise for terrain, then another layer of perlin noise as nothing.
         """
-        # TODO Get perlin noise
-        terrain = np.random.random((world_size, world_size))
-        terrain = (terrain < 0.1) * TERRAIN
-        return np.array((terrain == TERRAIN).nonzero()).T
+
+        size = world_size + terrain_resolution - world_size % terrain_resolution
+        terrain = generate_perlin_noise_2d(shape=(size, size), res=[terrain_resolution, terrain_resolution])
+        terrain = terrain[:world_size, :world_size]
+        return np.array((terrain > (1-terrain_intensity)).nonzero()).T
 
     @staticmethod
     def make_boundary(world_size, observation_radius) -> List[Tuple[int, int]]:
@@ -344,22 +371,75 @@ class SrYvlLvl0Env(Env):
             world[tuple(position)] = fill
 
 
-def main():
-    env = SrYvlLvl0Env(initial_food_density=0.2, world_size=10)
+def play_random():
+    env = SrYvlLvl0Env(
+        initial_food_density=0.2,
+        world_size=10,
+        observation_radius=3,
+        terrain_resolution=8,
+        terrain_intensity=0.8,
+    )
     env.render(mode='world_console')
-    for i in range(10):
+    for i in range(1000):
         env.step(env.sample_action())
-        env.render(mode='world_console')
+        env.render(mode='observable_console')
+        if env.done:
+            break
 
 
 def human_play():
-    env = SrYvlLvl0Env(initial_food_density=0.2, world_size=10)
+    env = SrYvlLvl0Env()
+    import matplotlib.pyplot as plt
     while not env.done:
-        env.render(mode='world_console')
+        img = env.render(mode='world_console')
+        # plt.imshow(img)
+        plt.show()
         inp = input('wasde input: ')
         key = 'eawds'
+        if inp not in key:
+            continue
         action = key.index(inp)
         env.step(action)
+        print(env.legal_actions, env.agent_size)
+
+
+def generate_perlin_noise_2d(shape, res):
+    def f(t):
+        return 6*t**5 - 15*t**4 + 10*t**3
+
+    delta = (res[0] / shape[0], res[1] / shape[1])
+    d = (shape[0] // res[0], shape[1] // res[1])
+    grid = np.mgrid[0:res[0]:delta[0],0:res[1]:delta[1]].transpose(1, 2, 0) % 1
+    # Gradients
+    angles = 2*np.pi*np.random.rand(res[0]+1, res[1]+1)
+    gradients = np.dstack((np.cos(angles), np.sin(angles)))
+    g00 = gradients[0:-1,0:-1].repeat(d[0], 0).repeat(d[1], 1)
+    g10 = gradients[1:,0:-1].repeat(d[0], 0).repeat(d[1], 1)
+    g01 = gradients[0:-1,1:].repeat(d[0], 0).repeat(d[1], 1)
+    g11 = gradients[1:,1:].repeat(d[0], 0).repeat(d[1], 1)
+    # Ramps
+    n00 = np.sum(grid * g00, 2)
+    n10 = np.sum(np.dstack((grid[:,:,0]-1, grid[:,:,1])) * g10, 2)
+    n01 = np.sum(np.dstack((grid[:,:,0], grid[:,:,1]-1)) * g01, 2)
+    n11 = np.sum(np.dstack((grid[:,:,0]-1, grid[:,:,1]-1)) * g11, 2)
+    # Interpolation
+    t = f(grid)
+    n0 = n00*(1-t[:,:,0]) + t[:,:,0]*n10
+    n1 = n01*(1-t[:,:,0]) + t[:,:,0]*n11
+    return np.sqrt(2)*((1-t[:,:,1])*n0 + t[:,:,1]*n1)
+
+
+def factors(n):
+    return set(reduce(list.__add__, ([i, n//i] for i in range(1, int(n**0.5) + 1) if n % i == 0)))
+
+
+def perlin():
+    import matplotlib.pyplot as plt
+    facs = sorted(list(factors(100)))
+    print(facs)
+    noise = generate_perlin_noise_2d(shape=(100, 100), res=[10, 10])
+    plt.imshow((noise > 0) * 255, cmap='gray')
+    plt.show()
 
 
 if __name__ == '__main__':
