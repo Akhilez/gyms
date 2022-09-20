@@ -87,16 +87,18 @@ class SrYvlLvl0Env(Env):
         self.terrain: List[Tuple[int, int]] = []
         self.world = np.array([])
         self.boundary_indices: List[Tuple[int, int]] = []
+        self._distances_from_center = np.array([])
 
         self.legal_actions = np.ones(self.action_space.n)
         self.done = False
+        self.agent_history = []
 
         self.reset()
 
     def render(self, mode='human'):
         if mode in ('world_console', 'observable_console'):
             print(self.agent_size)
-            world = self.observe() if mode != 'world_console' else self.world
+            world = self.observe('indexed') if mode != 'world_console' else self.world
 
             state = '\n'.join([' '.join(i) for i in world.astype(str)])
             state = state.replace('4', '□')  # Boundary
@@ -109,7 +111,7 @@ class SrYvlLvl0Env(Env):
             print(state)
 
         elif mode in ('observable_rgb_array', 'world_rgb_array', 'rgb_array'):
-            world = self.observe() if mode != 'world_rgb_array' else self.world
+            world = self.observe('indexed') if mode != 'world_rgb_array' else self.world
             img = np.ones((len(world), len(world), 3), dtype=int) * 255
             self.fill_indices(img, self.find_indices(world, BOUNDARY), [100, 100, 100])
             self.fill_indices(img, self.find_indices(world, TERRAIN), [150, 150, 150])
@@ -119,7 +121,7 @@ class SrYvlLvl0Env(Env):
 
         else:
             print(self.agent_size)
-            print(self.observe())
+            print(self.observe('indexed'))
 
     def step(self, action: int) -> Tuple[np.array, float, bool, dict]:
         """
@@ -144,10 +146,12 @@ class SrYvlLvl0Env(Env):
         - Redraw world
         """
 
+        self._push_agent_history()
+
         if self.legal_actions[action] == 0:  # Illegal action.
             self.legal_actions = np.zeros(self.action_space.n)
             self.done = True
-            return self.observe(), 0, self.done, {}
+            return self.observe('planes'), 0, self.done, {}
 
         y, x = POSITION_OFFSETS[action]
         self.agent_position[0] += y
@@ -168,7 +172,7 @@ class SrYvlLvl0Env(Env):
         self.legal_actions = self._find_legal_actions()
         self.draw_env()
 
-        return self.observe(), 1.0, self.done, {}
+        return self.observe('planes'), 1.0, self.done, {}
 
     def reset(self, *_args, **_kwargs) -> None:
         self.agent_size = 1
@@ -197,24 +201,38 @@ class SrYvlLvl0Env(Env):
 
         self.legal_actions = self._find_legal_actions()
         self.done = False
+        self.agent_history = []
+        self._distances_from_center = self._get_distances_from_center(side)
 
-        return self.observe()
+        return self.observe('planes')
 
-    def observe(self) -> np.array:
+    def observe(self, mode='planes') -> np.array:
         r = self.observation_radius
         y = self.agent_position[0]
         x = self.agent_position[1]
         x0, y0, x1, y1 = x - r, y - r, x + r + 1, y + r + 1
 
-        """
-        planes:
-        1: Boundary
-        2: Terrain
-        3: Food Ages
-        4: Player Health
-        """
+        window = self.world[y0: y1, x0: x1]
+        if mode == 'indexed':
+            return window
+        if mode == 'planes':
+            """
+            planes:
+            1: Boundary
+            2: Terrain
+            3: Food Ages
+            4: Player Health
+            5: Dist b/w center of the map to each point
+            6: Previous path of the player health
+            """
+            boundary = (window == BOUNDARY) * 1.0
+            terrain = (window == TERRAIN) * 1.0
+            food_ages = self._observe_food_ages()[y0: y1, x0: x1]
+            player_health = (window == AGENT) * self.agent_size
+            distances_from_center = self._distances_from_center[y0: y1, x0: x1]
+            history = self._draw_history_map()[y0: y1, x0: x1]
 
-        return self.world[y0: y1, x0: x1]
+            return np.array([boundary, terrain, food_ages, player_health, distances_from_center, history])
 
     def sample_action(self):
         mask = self.legal_actions.astype(float)
@@ -228,6 +246,11 @@ class SrYvlLvl0Env(Env):
         self.fill_indices(self.world, self.terrain, TERRAIN)
         self.fill_indices(self.world, self.boundary_indices, BOUNDARY)
         self.fill_indices(self.world, [self.agent_position], AGENT)
+
+    def _push_agent_history(self):
+        self.agent_history.append((tuple(self.agent_position), self.agent_size))
+        if len(self.agent_history) >= self.observation_radius ** 2:
+            del self.agent_history[0]
 
     def _observe_food_ages(self):
         ages = np.zeros((len(self.world), len(self.world)))
@@ -270,6 +293,13 @@ class SrYvlLvl0Env(Env):
         y1 = min(len(self.world), y + self.food_growth_radius + 1)
 
         return self.world[y0:y1, x0:x1]
+
+    def _draw_history_map(self):
+        side = len(self.world)
+        history = np.zeros((side, side))
+        for position, health in self.agent_history:
+            history[tuple(position)] = health
+        return history
 
     @staticmethod
     def _get_random_position_nearby(growth_window):
@@ -332,6 +362,18 @@ class SrYvlLvl0Env(Env):
     def _get_agent_initial_position(self):
         available_indices = np.array((self.world == NOTHING).nonzero()).T
         return available_indices[np.random.choice(len(available_indices))]
+
+    @staticmethod
+    def _get_distances_from_center(side):
+        dist = np.zeros((side, side))
+        center = side // 2
+        max_distance = np.linalg.norm(np.array([0, 0]) - np.array([center, center]))
+        for i in range(side):
+            for j in range(side):
+                distance = np.linalg.norm(np.array([i, j]) - np.array([center, center]))
+                distance /= max_distance
+                dist[i, j] = distance
+        return dist
 
     @staticmethod
     def find_indices(world, category):
@@ -399,7 +441,7 @@ def human_play():
         if inp not in key:
             continue
         action = key.index(inp)
-        env.step(action)
+        x = env.step(action)
         print(env.legal_actions, env.agent_size)
 
 
