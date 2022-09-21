@@ -181,10 +181,10 @@ class SrYvlLvl0Env(Env):
         )
         self.agent_size -= shrink_rate_movement
 
+        self.draw_env()
         self.legal_actions = self._find_legal_actions()
         if sum(self.legal_actions) == 0:
             self.done = True
-        self.draw_env()
 
         self.stats_agg["steps"] += 1
         self.stats_agg['health'].append(self.agent_size)
@@ -395,7 +395,7 @@ class SrYvlLvl0Env(Env):
             down = 0
 
         # If agent already on terrain (from previous high health), it can move on top of the terrain.
-        if self.world[tuple(self.agent_position)] != TERRAIN and self.agent_size < self.size_threshold_to_jump:
+        if self._observe_terrain()[tuple(self.agent_position)] != 1 and self.agent_size < self.size_threshold_to_jump:
             if self.world[y, x - 1] == TERRAIN:
                 left = 0
             if self.world[y - 1, x] == TERRAIN:
@@ -473,17 +473,21 @@ class SrYvlLvl0Env(Env):
 
 
 def play_random():
-    env = SrYvlLvl0Env()
-    env.render(mode="world_console")
-    for i in range(10000):
-        env.step(env.sample_action())
-        env.render(mode="observable_console")
-        if env.done:
-            break
+    stats = []
+    for sim in range(1):
+        env = SrYvlLvl0Env()
+        env.render(mode="world_console")
+        for i in range(50000):
+            env.step(env.sample_action())
+            env.render(mode="observable_console")
+            if env.done:
+                break
+        stats.append(env.stats_agg)
+    pass
 
 
 def human_play():
-    env = SrYvlLvl0Env()
+    env = SrYvlLvl0Env(size_threshold_to_jump=0.8)
     import matplotlib.pyplot as plt
 
     while not env.done:
