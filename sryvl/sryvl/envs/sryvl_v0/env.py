@@ -76,10 +76,11 @@ class SrYvlLvl0Env(Env):
         food_expiry_period=50,
         initial_food_density=0.2,
         poison_fraction=0.5,
-        agent_growth_rate=0.15,
-        shrink_rate_min=0.001,
+        growth_rate_min=0.01,
+        growth_rate_max=0.1,
+        shrink_rate_min=0.009,
         shrink_rate_max=0.01,
-        movement_shrink_penalty=5,
+        movement_shrink_penalty=1.05,
         observation_radius=3,
         size_threshold_to_jump=1.5,
         terrain_resolution=8,
@@ -94,7 +95,8 @@ class SrYvlLvl0Env(Env):
         self.food_expiry_period = food_expiry_period
         self.initial_food_density = initial_food_density
         self.poison_fraction = poison_fraction
-        self.agent_growth_rate = agent_growth_rate
+        self.growth_rate_min = growth_rate_min
+        self.growth_rate_max = growth_rate_max
         self.shrink_rate_min = shrink_rate_min
         self.shrink_rate_max = shrink_rate_max
         self.movement_shrink_penalty = movement_shrink_penalty
@@ -370,16 +372,17 @@ class SrYvlLvl0Env(Env):
             return empty_positions[np.random.choice(len(empty_positions))]
 
     def _grow_agent(self):
-        new_size = self.agent_size + self.agent_growth_rate
-        if new_size <= self.max_agent_size:
+        if self.agent_size + self.growth_rate_min <= self.max_agent_size:
             for i, food in enumerate(self.foods):
                 if tuple(food.position) == tuple(self.agent_position):
+                    # The agent ate the thing.
+                    delta = self._get_food_yield(food.age)
                     if food.is_poison:
-                        self.agent_size -= self.agent_growth_rate
+                        self.agent_size -= delta
                         self.stats_agg['poison_eaten'] += 1
                     else:
                         # The agent ate the food.
-                        self.agent_size = new_size
+                        self.agent_size += delta
                         self.stats_agg['food_eaten'] += 1
 
                     self.stats_agg['has_eaten'].append(True)
@@ -431,9 +434,16 @@ class SrYvlLvl0Env(Env):
         return np.array([nothing, left, up, right, down])
 
     def _get_shrink_rate_movement(self):
+        """Linearly increasing function b/w min and max. x axis = agent_size."""
         return (
             self.shrink_rate_max - self.shrink_rate_min
         ) / self.max_agent_size * self.agent_size + self.shrink_rate_min
+
+    def _get_food_yield(self, food_age):
+        """Linearly increasing function b/w min and max. x axis = food age."""
+        return (
+            self.growth_rate_max - self.growth_rate_min
+       ) / self.food_expiry_period * food_age + self.growth_rate_min
 
     def _get_agent_initial_position(self):
         available_indices = np.array((self.world == NOTHING).nonzero()).T
@@ -518,9 +528,9 @@ def human_play():
 
     while not env.done:
         env.render(mode="world_console")
-        img = env.observe(mode="rgb_array")
-        plt.imshow(np.moveaxis(img, 0, -1))
-        plt.show()
+        # img = env.observe(mode="rgb_array")
+        # plt.imshow(np.moveaxis(img, 0, -1))
+        # plt.show()
         inp = input("wasde input: ")
         key = "eawds"
         if inp not in key:
