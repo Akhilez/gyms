@@ -253,7 +253,7 @@ def build_cell(
             color = skin_color
         cell[:, y, x] = color
 
-    cell -= int(distance_from_center * 20)
+    cell -= int(distance_from_center * 50)
     cell = np.maximum(cell, 0)
 
     return cell
@@ -284,11 +284,16 @@ def make_obs(window, plant_inventory: int, poison_inventory: int, jumper_thresho
             ) = window[:, i, j]
 
             content = []
-            terrain_background = False
-            energy_level = 1
-
-            if boundary > 0:
-                pass
+            if plant_age > 0 and health > 0:
+                plant_content = plants[int(plant_age * len(plants))]
+                plant_offset = [[x[0], x[1] + 1, x[2]] for x in plant_content]
+                agent_offset = [[x[0], x[1] - 2, x[2]] for x in agent]
+                content = plant_offset + agent_offset
+            elif poison_age > 0 and health > 0:
+                plant_content = poisons[int(poison_age * len(poisons))]
+                plant_offset = [[x[0], x[1] + 1, x[2]] for x in plant_content]
+                agent_offset = [[x[0], x[1] - 2, x[2]] for x in agent]
+                content = plant_offset + agent_offset
             elif plant_age > 0:
                 # Index of the size of the plant. (binning)
                 plant_size_category = int(plant_age * len(plants))
@@ -298,23 +303,19 @@ def make_obs(window, plant_inventory: int, poison_inventory: int, jumper_thresho
                 plant_size_category = int(poison_age * len(poisons))
                 content = poisons[plant_size_category]
             elif health > 0:
-                energy_level = health
                 content = agent
                 if plant_inventory > 0:
                     content += plant_in_hand
                 if poison_inventory > 0:
                     content += poison_in_hand
-            if terrain > 0:
-                content += []
-                terrain_background = True
 
             cell = build_cell(
                 content,
-                energy_level=energy_level,
+                energy_level=health,
                 reddish_threshold=0.2,
                 jumper_threshold=jumper_threshold,
                 distance_from_center=distance,
-                terrain_background=terrain_background,
+                terrain_background=terrain > 0,
                 is_boundary=boundary > 0,
             )
             img[:, i*9: (i+1) * 9, j*9: (j+1) * 9] = cell
