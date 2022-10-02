@@ -4,7 +4,7 @@ PETAL_GOOD = [100, 200, 255]
 PETAL_BAD = [255, 100, 100]
 LEAF = [50, 150, 50]
 STEM = [75, 50, 25]
-SKIN = [255, 200, 00]
+SKIN = [255, 200, 0]
 EYE = [0, 0, 0]
 SHIRT = [255, 150, 200]
 PANT = [25, 25, 75]
@@ -230,7 +230,7 @@ def build_cell(
         terrain_background=False,
         is_boundary=False,
 ):
-    cell = np.ones((3, 9, 9), dtype=np.uint8)
+    cell = np.ones((3, 9, 9), dtype=int)
 
     if is_boundary:
         return cell * BOUNDARY
