@@ -22,6 +22,10 @@ ACTION_LEFT = 1
 ACTION_UP = 2
 ACTION_RIGHT = 3
 ACTION_DOWN = 4
+ACTION_EAT = 5
+# ACTION_STORE = 6
+# ACTION_PLANT = 7
+# ACTION_KILL = 8
 
 POSITION_OFFSETS = {
     ACTION_NONE: (0, 0),
@@ -29,6 +33,7 @@ POSITION_OFFSETS = {
     ACTION_UP: (-1, 0),
     ACTION_RIGHT: (0, +1),
     ACTION_DOWN: (1, 0),
+    ACTION_EAT: (0, 0),
 }
 
 
@@ -47,17 +52,15 @@ class Food:
 
 class SrYvlLvl0Env(Env):
     metadata = {
-        "render.modes": [
+        "render_modes": [
             "human",
-            "world_console",
-            "observable_console",
+            "ansi",
             "rgb_array",
-            "world_rgb_array",
-            "observable_rgb_array",
+            "flattened_planes",
         ]
     }
     reward_range = (1, 1)
-    action_space = Discrete(5)
+    action_space = Discrete(6)
     observation_space = Box(low=0, high=255, shape=(3, 7*9, 7*9), dtype=np.uint8)
     # observation_space = Box(low=0, high=4, shape=(49,), dtype=int)
     # observation_space = Box(low=0, high=2 * 20, shape=(294,), dtype=np.float64)
@@ -122,9 +125,12 @@ class SrYvlLvl0Env(Env):
         self.reset()
 
     def render(self, mode="human"):
-        if mode in ("human", "world_console", "observable_console"):
+        assert mode in self.metadata['render_modes']
+
+        if mode in ("human", 'ansi'):
             print(self.agent_size)
-            world = self.observe("indexed") if mode != "world_console" else self.world
+            world = self.world.copy()
+            world[tuple(self.agent_position)] = AGENT
 
             state = "\n".join([" ".join(i) for i in world.astype(str)])
             state = state.replace("4", "□")  # Boundary
@@ -136,12 +142,49 @@ class SrYvlLvl0Env(Env):
             state = state.replace(".", "")
 
             print(state)
-
-        elif mode in ("observable_rgb_array", "world_rgb_array", "rgb_array"):
-            return self.observe()
-
         else:
-            return self.observe()
+            """
+            planes:
+            1: Boundary
+            2: Terrain
+            3: Food Ages
+            4: Poison Ages
+            5: Player Health
+            6: Dist b/w center of the map to each point
+            7: Previous path of the player health
+            """
+
+            r = self.observation_radius
+            y = self.agent_position[0]
+            x = self.agent_position[1]
+            x0, y0, x1, y1 = x - r, y - r, x + r + 1, y + r + 1
+            window = self.world[y0:y1, x0:x1]
+
+            boundary = (window == BOUNDARY) * 1.0
+            terrain = self._observe_terrain()[y0:y1, x0:x1]
+            food_ages = self._observe_food_ages(is_poison=False)[y0:y1, x0:x1]
+            poison_ages = self._observe_food_ages(is_poison=True)[y0:y1, x0:x1]
+            player_health = np.zeros_like(window, dtype=float)
+            player_health[self.observation_radius, self.observation_radius] = self.agent_size
+            distances_from_center = self._distances_from_center[y0:y1, x0:x1]
+            history = self._draw_history_map()[y0:y1, x0:x1]
+
+            obs = np.array(
+                [
+                    boundary,
+                    terrain,
+                    food_ages,
+                    poison_ages,
+                    player_health,
+                    distances_from_center,
+                    history,
+                ]
+            )
+            if mode == "flattened_planes":
+                obs = obs.flatten()
+            else:  # mode == 'rgb_array':
+                obs = make_obs(obs, 0, 0, self.size_threshold_to_jump)
+            return obs
 
     def step(self, action: int) -> Tuple[np.array, float, bool, dict]:
         """
@@ -168,24 +211,23 @@ class SrYvlLvl0Env(Env):
 
         self.agent_history.append((tuple(self.agent_position), self.agent_size))
 
-        if self.legal_actions[action] == 0:  # Illegal action.
+        if self.legal_actions[action] == 0:  # Illegal action == Noop
             action = 0
 
         y, x = POSITION_OFFSETS[action]
         self.agent_position[0] += y
         self.agent_position[1] += x
 
+        # ----- HEALTH -----
+        self._shrink_agent(moved=(x != 0 or y != 0))
+        if action == ACTION_EAT:
+            self._grow_agent()
+
+        # ----- FOODS ------
         [food.step() for food in self.foods]
         self.stats_agg['n_foods_expired'].append(sum([1 for food in self.foods if food.expired]))
         self._clear_expired_foods()
-        self._grow_agent()
         self._grow_more_food()
-
-        shrink_rate_movement = self._get_shrink_rate_movement()
-        shrink_rate_movement *= (
-            1 if action == ACTION_NONE else self.movement_shrink_penalty
-        )
-        self.agent_size -= shrink_rate_movement
 
         self.draw_env()
         self.legal_actions = self._find_legal_actions()
@@ -194,6 +236,7 @@ class SrYvlLvl0Env(Env):
 
         self.stats_agg["steps"] += 1
         self.stats_agg['health'].append(self.agent_size)
+        self.stats_agg['has_eaten'].append(action == ACTION_EAT)
 
         return self.observe(), 1.0, self.done, {}
 
@@ -226,7 +269,6 @@ class SrYvlLvl0Env(Env):
                 self.world[tuple(food.position)] = POISON
 
         self.agent_position = self._get_agent_initial_position()
-        self.fill_indices(self.world, [self.agent_position], AGENT)
 
         self.legal_actions = self._find_legal_actions()
         self.done = False
@@ -247,50 +289,8 @@ class SrYvlLvl0Env(Env):
 
         return self.observe()
 
-    def observe(self, mode="rgb_array") -> np.array:
-        r = self.observation_radius
-        y = self.agent_position[0]
-        x = self.agent_position[1]
-        x0, y0, x1, y1 = x - r, y - r, x + r + 1, y + r + 1
-
-        window = self.world[y0:y1, x0:x1]
-        if mode == "indexed":
-            return window.flatten()
-        if mode in ("planes", 'flattened_planes', 'rgb_array'):
-            """
-            planes:
-            1: Boundary
-            2: Terrain
-            3: Food Ages
-            4: Poison Ages
-            5: Player Health
-            6: Dist b/w center of the map to each point
-            7: Previous path of the player health
-            """
-            boundary = (window == BOUNDARY) * 1.0
-            terrain = self._observe_terrain()[y0:y1, x0:x1]
-            food_ages = self._observe_food_ages(is_poison=False)[y0:y1, x0:x1]
-            poison_ages = self._observe_food_ages(is_poison=True)[y0:y1, x0:x1]
-            player_health = (window == AGENT) * self.agent_size
-            distances_from_center = self._distances_from_center[y0:y1, x0:x1]
-            history = self._draw_history_map()[y0:y1, x0:x1]
-
-            obs = np.array(
-                [
-                    boundary,
-                    terrain,
-                    food_ages,
-                    poison_ages,
-                    player_health,
-                    distances_from_center,
-                    history,
-                ]
-            )
-            if mode == "flattened_planes":
-                obs = obs.flatten()
-            elif mode == 'rgb_array':
-                obs = make_obs(obs, 0, 0, self.size_threshold_to_jump)
-            return obs
+    def observe(self) -> np.array:
+        return self.render(mode="rgb_array")
 
     def sample_action(self):
         mask = self.legal_actions.astype(float)
@@ -304,7 +304,6 @@ class SrYvlLvl0Env(Env):
         self.fill_indices(self.world, [f.position for f in self.foods if f.is_poison], POISON)
         self.fill_indices(self.world, self.terrain, TERRAIN)
         self.fill_indices(self.world, self.boundary_indices, BOUNDARY)
-        self.fill_indices(self.world, [self.agent_position], AGENT)
 
     def _observe_food_ages(self, is_poison: False):
         ages = np.zeros((len(self.world), len(self.world)))
@@ -372,24 +371,22 @@ class SrYvlLvl0Env(Env):
             return empty_positions[np.random.choice(len(empty_positions))]
 
     def _grow_agent(self):
-        if self.agent_size + self.growth_rate_min <= self.max_agent_size:
-            for i, food in enumerate(self.foods):
-                if tuple(food.position) == tuple(self.agent_position):
-                    # The agent ate the thing.
-                    delta = self._get_food_yield(food.age)
-                    if food.is_poison:
-                        self.agent_size -= delta
-                        self.stats_agg['poison_eaten'] += 1
-                    else:
-                        # The agent ate the food.
-                        self.agent_size += delta
-                        self.stats_agg['food_eaten'] += 1
+        i = [i for i, f in enumerate(self.foods) if tuple(f.position) == tuple(self.agent_position)][0]
+        food = self.foods[i]
 
-                    self.stats_agg['has_eaten'].append(True)
+        delta = self._get_food_yield(food.age)
+        if food.is_poison:
+            self.agent_size -= delta
+            self.stats_agg['poison_eaten'] += 1
+        elif self.agent_size + delta <= self.max_agent_size:
+            self.agent_size += delta
+            self.stats_agg['food_eaten'] += 1
+        del self.foods[i]
 
-                    del self.foods[i]
-                    return
-        self.stats_agg['has_eaten'].append(False)
+    def _shrink_agent(self, moved: bool):
+        shrink_rate_movement = self._get_shrink_rate_movement()
+        shrink_rate_movement *= 1 if moved else self.movement_shrink_penalty
+        self.agent_size -= shrink_rate_movement
 
     def _clear_expired_foods(self):
         self.foods = [food for food in self.foods if not food.expired]
@@ -406,7 +403,7 @@ class SrYvlLvl0Env(Env):
         if self.agent_size <= 0:
             return np.zeros(self.action_space.n)
 
-        nothing, left, up, right, down = 1, 1, 1, 1, 1
+        nothing, left, up, right, down, eat = 1, 1, 1, 1, 1, 0
 
         y = self.agent_position[0]
         x = self.agent_position[1]
@@ -420,8 +417,9 @@ class SrYvlLvl0Env(Env):
         if self.world[y + 1, x] == BOUNDARY:
             down = 0
 
+        agent_on = self.world[tuple(self.agent_position)]
         # If agent already on terrain (from previous high health), it can move on top of the terrain.
-        if self._observe_terrain()[tuple(self.agent_position)] != 1 and self.agent_size < self.size_threshold_to_jump:
+        if agent_on != TERRAIN and self.agent_size < self.size_threshold_to_jump:
             if self.world[y, x - 1] == TERRAIN:
                 left = 0
             if self.world[y - 1, x] == TERRAIN:
@@ -431,7 +429,10 @@ class SrYvlLvl0Env(Env):
             if self.world[y + 1, x] == TERRAIN:
                 down = 0
 
-        return np.array([nothing, left, up, right, down])
+        if agent_on in (FOOD, POISON):
+            eat = 1
+
+        return np.array([nothing, left, up, right, down, eat])
 
     def _get_shrink_rate_movement(self):
         """Linearly increasing function b/w min and max. x axis = agent_size."""
@@ -509,10 +510,10 @@ def play_random():
     stats = []
     for sim in range(1):
         env = SrYvlLvl0Env()
-        env.render(mode="world_console")
+        env.render(mode="ansi")
         for i in range(50000):
             env.step(env.sample_action())
-            env.render(mode="observable_console")
+            env.render(mode="ansi")
             if env.done:
                 break
         stats.append(env.stats_agg)
@@ -527,12 +528,12 @@ def human_play():
     env = SrYvlLvl0Env()
 
     while not env.done:
-        env.render(mode="world_console")
-        # img = env.observe(mode="rgb_array")
-        # plt.imshow(np.moveaxis(img, 0, -1))
-        # plt.show()
-        inp = input("wasde input: ")
-        key = "eawds"
+        env.render(mode="human")
+        img = env.observe()
+        plt.imshow(np.moveaxis(img, 0, -1))
+        plt.show()
+        inp = input("wasdeq input: ")
+        key = "qawdse"
         if inp not in key:
             continue
         action = key.index(inp)
