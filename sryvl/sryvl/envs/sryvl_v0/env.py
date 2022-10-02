@@ -23,9 +23,9 @@ ACTION_UP = 2
 ACTION_RIGHT = 3
 ACTION_DOWN = 4
 ACTION_EAT = 5
-# ACTION_STORE = 6
-# ACTION_PLANT = 7
-# ACTION_KILL = 8
+ACTION_KILL = 6
+# ACTION_STORE = 7
+# ACTION_PLANT = 8
 
 POSITION_OFFSETS = {
     ACTION_NONE: (0, 0),
@@ -34,6 +34,7 @@ POSITION_OFFSETS = {
     ACTION_RIGHT: (0, +1),
     ACTION_DOWN: (1, 0),
     ACTION_EAT: (0, 0),
+    ACTION_KILL: (0, 0),
 }
 
 
@@ -222,6 +223,8 @@ class SrYvlLvl0Env(Env):
         self._shrink_agent(moved=(x != 0 or y != 0))
         if action == ACTION_EAT:
             self._grow_agent()
+        elif action == ACTION_KILL:
+            self._kill_food()
 
         # ----- FOODS ------
         [food.step() for food in self.foods]
@@ -388,6 +391,10 @@ class SrYvlLvl0Env(Env):
         shrink_rate_movement *= 1 if moved else self.movement_shrink_penalty
         self.agent_size -= shrink_rate_movement
 
+    def _kill_food(self):
+        i = [i for i, f in enumerate(self.foods) if tuple(f.position) == tuple(self.agent_position)][0]
+        del self.foods[i]
+
     def _clear_expired_foods(self):
         self.foods = [food for food in self.foods if not food.expired]
         self.fill_indices(self.world, self.find_indices(self.world, FOOD), NOTHING)
@@ -403,7 +410,7 @@ class SrYvlLvl0Env(Env):
         if self.agent_size <= 0:
             return np.zeros(self.action_space.n)
 
-        nothing, left, up, right, down, eat = 1, 1, 1, 1, 1, 0
+        nothing, left, up, right, down, eat, kill = 1, 1, 1, 1, 1, 0, 0
 
         y = self.agent_position[0]
         x = self.agent_position[1]
@@ -431,8 +438,9 @@ class SrYvlLvl0Env(Env):
 
         if agent_on in (FOOD, POISON):
             eat = 1
+            kill = 1
 
-        return np.array([nothing, left, up, right, down, eat])
+        return np.array([nothing, left, up, right, down, eat, kill])
 
     def _get_shrink_rate_movement(self):
         """Linearly increasing function b/w min and max. x axis = agent_size."""
@@ -532,8 +540,8 @@ def human_play():
         img = env.observe()
         plt.imshow(np.moveaxis(img, 0, -1))
         plt.show()
-        inp = input("wasdeq input: ")
-        key = "qawdse"
+        inp = input("qawdser input: ")
+        key = "qawdser"
         if inp not in key:
             continue
         action = key.index(inp)
