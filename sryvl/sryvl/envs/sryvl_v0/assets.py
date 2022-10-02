@@ -94,6 +94,8 @@ very_large_plant = [
     [7, 3, STEM],
 ]
 
+plants = [small_plant, medium_plant, large_plant, very_large_plant]
+
 small_poisonous_plant = [
     [2, 5, PETAL_BAD],
     [3, 6, PETAL_BAD],
@@ -108,7 +110,7 @@ small_poisonous_plant = [
     [7, 3, STEM],
 ]
 
-medium_poisonous_stem = [
+medium_poisonous_plant = [
     [2, 5, PETAL_BAD],
     [3, 6, PETAL_BAD],
     [3, 4, PETAL_BAD],
@@ -125,7 +127,7 @@ medium_poisonous_stem = [
     [7, 3, STEM],
 ]
 
-large_poisonous_stem = [
+large_poisonous_plant = [
     [2, 5, PETAL_BAD],
     [3, 6, PETAL_BAD],
     [3, 4, PETAL_BAD],
@@ -146,7 +148,7 @@ large_poisonous_stem = [
     [7, 3, STEM],
 ]
 
-very_large_poisonous_stem = [
+very_large_poisonous_plant = [
     [1, 6, PETAL_BAD],
     [1, 4, PETAL_BAD],
     [2, 7, PETAL_BAD],
@@ -174,6 +176,8 @@ very_large_poisonous_stem = [
     [6, 3, STEM],
     [7, 3, STEM],
 ]
+
+poisons = [small_poisonous_plant, medium_poisonous_plant, large_poisonous_plant, very_large_poisonous_plant]
 
 agent = [
     [1, 6, SKIN],
@@ -286,9 +290,13 @@ def make_obs(window, plant_inventory: int, poison_inventory: int, jumper_thresho
             if boundary > 0:
                 pass
             elif plant_age > 0:
-                content = small_plant  # TODO: Determine if s, m, l, vl
+                # Index of the size of the plant. (binning)
+                plant_size_category = int(plant_age * len(plants))
+                content = plants[plant_size_category]
             elif poison_age > 0:
-                content = small_poisonous_plant
+                # Index of the size of the plant. (binning)
+                plant_size_category = int(poison_age * len(poisons))
+                content = poisons[plant_size_category]
             elif health > 0:
                 energy_level = health
                 content = agent
