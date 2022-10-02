@@ -33,11 +33,12 @@ POSITION_OFFSETS = {
 
 
 class Food:
-    def __init__(self, position, expiry_period):
+    def __init__(self, position, expiry_period, is_poison):
         self.age = 0
         self.expired = False
         self.position = position
         self.expiry_period = expiry_period
+        self.is_poison = is_poison
 
     def step(self):
         self.age += 1
@@ -74,6 +75,7 @@ class SrYvlLvl0Env(Env):
         food_growth_radius=2,
         food_expiry_period=50,
         initial_food_density=0.2,
+        poison_fraction=0.5,
         agent_growth_rate=0.15,
         shrink_rate_min=0.001,
         shrink_rate_max=0.01,
@@ -91,6 +93,7 @@ class SrYvlLvl0Env(Env):
         self.food_growth_radius = food_growth_radius
         self.food_expiry_period = food_expiry_period
         self.initial_food_density = initial_food_density
+        self.poison_fraction = poison_fraction
         self.agent_growth_rate = agent_growth_rate
         self.shrink_rate_min = shrink_rate_min
         self.shrink_rate_max = shrink_rate_max
@@ -116,7 +119,7 @@ class SrYvlLvl0Env(Env):
 
         self.reset()
 
-    def render(self, mode="world_console"):
+    def render(self, mode="human"):
         if mode in ("human", "world_console", "observable_console"):
             print(self.agent_size)
             world = self.observe("indexed") if mode != "world_console" else self.world
@@ -127,22 +130,16 @@ class SrYvlLvl0Env(Env):
             state = state.replace("2", "•")  # Food
             state = state.replace("1", "🔺")  # Player
             state = state.replace("0", " ")  # Nothing
+            state = state.replace("5", "◦")  # Poison
             state = state.replace(".", "")
 
             print(state)
 
         elif mode in ("observable_rgb_array", "world_rgb_array", "rgb_array"):
-            world = self.observe("indexed") if mode != "world_rgb_array" else self.world
-            img = np.ones((len(world), len(world), 3), dtype=int) * 255
-            self.fill_indices(img, self.find_indices(world, BOUNDARY), [100, 100, 100])
-            self.fill_indices(img, self.find_indices(world, TERRAIN), [150, 150, 150])
-            self.fill_indices(img, self.find_indices(world, FOOD), [0, 255, 0])
-            self.fill_indices(img, self.find_indices(world, AGENT), [255, 0, 0])
-            return img
+            return self.observe()
 
         else:
-            print(self.agent_size)
-            print(self.observe("indexed"))
+            return self.observe()
 
     def step(self, action: int) -> Tuple[np.array, float, bool, dict]:
         """
@@ -218,11 +215,13 @@ class SrYvlLvl0Env(Env):
         self.fill_indices(self.world, self.boundary_indices, BOUNDARY)
 
         self.foods = [
-            Food(pos, self.food_expiry_period)
+            Food(pos, self.food_expiry_period, np.random.rand() < self.poison_fraction)
             for pos in self.find_indices(self.world, FOOD)
         ]
         for food in self.foods:
             food.age = np.random.randint(self.food_expiry_period)
+            if food.is_poison:
+                self.world[tuple(food.position)] = POISON
 
         self.agent_position = self._get_agent_initial_position()
         self.fill_indices(self.world, [self.agent_position], AGENT)
@@ -236,6 +235,7 @@ class SrYvlLvl0Env(Env):
         self.stats_agg = {
             "steps": 0,
             "food_eaten": 0,
+            'poison_eaten': 0,
             "n_foods_available": deque(maxlen=max_buffer),
             "n_foods_expired": deque(maxlen=max_buffer),
             "n_foods_generated": deque(maxlen=max_buffer),
@@ -267,7 +267,8 @@ class SrYvlLvl0Env(Env):
             """
             boundary = (window == BOUNDARY) * 1.0
             terrain = self._observe_terrain()[y0:y1, x0:x1]
-            food_ages = self._observe_food_ages()[y0:y1, x0:x1]
+            food_ages = self._observe_food_ages(is_poison=False)[y0:y1, x0:x1]
+            poison_ages = self._observe_food_ages(is_poison=True)[y0:y1, x0:x1]
             player_health = (window == AGENT) * self.agent_size
             distances_from_center = self._distances_from_center[y0:y1, x0:x1]
             history = self._draw_history_map()[y0:y1, x0:x1]
@@ -277,7 +278,7 @@ class SrYvlLvl0Env(Env):
                     boundary,
                     terrain,
                     food_ages,
-                    boundary,  # TODO: Replace this with poison
+                    poison_ages,
                     player_health,
                     distances_from_center,
                     history,
@@ -297,15 +298,17 @@ class SrYvlLvl0Env(Env):
     def draw_env(self) -> np.array:
         side = self.world_size + (self.observation_radius * 2)
         self.world = np.ones((side, side), dtype=int) * NOTHING
-        self.fill_indices(self.world, [f.position for f in self.foods], FOOD)
+        self.fill_indices(self.world, [f.position for f in self.foods if not f.is_poison], FOOD)
+        self.fill_indices(self.world, [f.position for f in self.foods if f.is_poison], POISON)
         self.fill_indices(self.world, self.terrain, TERRAIN)
         self.fill_indices(self.world, self.boundary_indices, BOUNDARY)
         self.fill_indices(self.world, [self.agent_position], AGENT)
 
-    def _observe_food_ages(self):
+    def _observe_food_ages(self, is_poison: False):
         ages = np.zeros((len(self.world), len(self.world)))
         for food in self.foods:
-            ages[tuple(food.position)] = food.age / self.food_expiry_period
+            if (is_poison and food.is_poison) or (not is_poison and not food.is_poison):
+                ages[tuple(food.position)] = food.age / self.food_expiry_period
         return ages
 
     def _observe_terrain(self):
@@ -330,6 +333,7 @@ class SrYvlLvl0Env(Env):
                                 Food(
                                     random_position,
                                     self.food_expiry_period,
+                                    food.is_poison,
                                 )
                             )
         self.stats_agg['n_foods_generated'].append(len(more_foods))
@@ -370,10 +374,14 @@ class SrYvlLvl0Env(Env):
         if new_size <= self.max_agent_size:
             for i, food in enumerate(self.foods):
                 if tuple(food.position) == tuple(self.agent_position):
-                    # The agent ate the food.
-                    self.agent_size = new_size
+                    if food.is_poison:
+                        self.agent_size -= self.agent_growth_rate
+                        self.stats_agg['poison_eaten'] += 1
+                    else:
+                        # The agent ate the food.
+                        self.agent_size = new_size
+                        self.stats_agg['food_eaten'] += 1
 
-                    self.stats_agg['food_eaten'] += 1
                     self.stats_agg['has_eaten'].append(True)
 
                     del self.foods[i]
