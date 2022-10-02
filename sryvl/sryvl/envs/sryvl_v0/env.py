@@ -6,6 +6,8 @@ import numpy as np
 from functools import reduce
 from collections import deque
 
+from envs.sryvl_v0.assets import make_obs
+
 np.set_printoptions(linewidth=10000, threshold=np.inf)
 
 NOTHING = 0
@@ -13,6 +15,7 @@ AGENT = 1
 FOOD = 2
 TERRAIN = 3
 BOUNDARY = 4
+POISON = 5
 
 ACTION_NONE = 0
 ACTION_LEFT = 1
@@ -54,9 +57,9 @@ class SrYvlLvl0Env(Env):
     }
     reward_range = (1, 1)
     action_space = Discrete(5)
-    # observation_space = Box(low=0, high=2 * 20, shape=(6, 7, 7))
+    observation_space = Box(low=0, high=255, shape=(3, 7*9, 7*9), dtype=np.uint8)
     # observation_space = Box(low=0, high=4, shape=(49,), dtype=int)
-    observation_space = Box(low=0, high=2 * 20, shape=(294,), dtype=np.float64)
+    # observation_space = Box(low=0, high=2 * 20, shape=(294,), dtype=np.float64)
     spec = EnvSpec(
         id='sryvl-v0',
         entry_point='sryvl.envs.sryvl_v0.sryvl:SrYvlLvl0Env',
@@ -113,7 +116,7 @@ class SrYvlLvl0Env(Env):
 
         self.reset()
 
-    def render(self, mode="human"):
+    def render(self, mode="world_console"):
         if mode in ("human", "world_console", "observable_console"):
             print(self.agent_size)
             world = self.observe("indexed") if mode != "world_console" else self.world
@@ -242,7 +245,7 @@ class SrYvlLvl0Env(Env):
 
         return self.observe()
 
-    def observe(self, mode="flattened_planes") -> np.array:
+    def observe(self, mode="rgb_array") -> np.array:
         r = self.observation_radius
         y = self.agent_position[0]
         x = self.agent_position[1]
@@ -251,15 +254,16 @@ class SrYvlLvl0Env(Env):
         window = self.world[y0:y1, x0:x1]
         if mode == "indexed":
             return window.flatten()
-        if mode in ("planes", 'flattened_planes'):
+        if mode in ("planes", 'flattened_planes', 'rgb_array'):
             """
             planes:
             1: Boundary
             2: Terrain
             3: Food Ages
-            4: Player Health
-            5: Dist b/w center of the map to each point
-            6: Previous path of the player health
+            4: Poison Ages
+            5: Player Health
+            6: Dist b/w center of the map to each point
+            7: Previous path of the player health
             """
             boundary = (window == BOUNDARY) * 1.0
             terrain = self._observe_terrain()[y0:y1, x0:x1]
@@ -273,6 +277,7 @@ class SrYvlLvl0Env(Env):
                     boundary,
                     terrain,
                     food_ages,
+                    boundary,  # TODO: Replace this with poison
                     player_health,
                     distances_from_center,
                     history,
@@ -280,8 +285,9 @@ class SrYvlLvl0Env(Env):
             )
             if mode == "flattened_planes":
                 obs = obs.flatten()
+            elif mode == 'rgb_array':
+                obs = make_obs(obs, 0, 0, self.size_threshold_to_jump)
             return obs
-
 
     def sample_action(self):
         mask = self.legal_actions.astype(float)
@@ -496,13 +502,17 @@ def play_random():
 
 
 def human_play():
+    import matplotlib
+    matplotlib.use('TkAgg')
+    from matplotlib import pyplot as plt
+
     env = SrYvlLvl0Env()
-    import matplotlib.pyplot as plt
 
     while not env.done:
-        img = env.render(mode="world_console")
-        # plt.imshow(img)
-        # plt.show()
+        env.render(mode="world_console")
+        img = env.observe(mode="rgb_array")
+        plt.imshow(np.moveaxis(img, 0, -1))
+        plt.show()
         inp = input("wasde input: ")
         key = "eawds"
         if inp not in key:
