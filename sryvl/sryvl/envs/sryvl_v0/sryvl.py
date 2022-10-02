@@ -1,5 +1,6 @@
 from typing import Tuple, List
 from gym import Env
+from gym.envs.registration import EnvSpec
 from gym.spaces import Discrete, Box
 import numpy as np
 from functools import reduce
@@ -51,11 +52,16 @@ class SrYvlLvl0Env(Env):
             "observable_rgb_array",
         ]
     }
-    reward_range = (-np.inf, np.inf)
-
-    # Set these in ALL subclasses
+    reward_range = (1, 1)
     action_space = Discrete(5)
-    observation_space = Box(low=0, high=4, shape=(5, 5))
+    # observation_space = Box(low=0, high=2 * 20, shape=(6, 7, 7))
+    # observation_space = Box(low=0, high=4, shape=(49,), dtype=int)
+    observation_space = Box(low=0, high=2 * 20, shape=(294,), dtype=np.float64)
+    spec = EnvSpec(
+        id='sryvl-v0',
+        entry_point='sryvl.envs.sryvl_v0.sryvl:SrYvlLvl0Env',
+        max_episode_steps=30_000,
+    )
 
     def __init__(
         self,
@@ -161,9 +167,7 @@ class SrYvlLvl0Env(Env):
         self.agent_history.append((tuple(self.agent_position), self.agent_size))
 
         if self.legal_actions[action] == 0:  # Illegal action.
-            self.legal_actions = np.zeros(self.action_space.n)
-            self.done = True
-            return self.observe("planes"), 0, self.done, {}
+            action = 0
 
         y, x = POSITION_OFFSETS[action]
         self.agent_position[0] += y
@@ -189,7 +193,7 @@ class SrYvlLvl0Env(Env):
         self.stats_agg["steps"] += 1
         self.stats_agg['health'].append(self.agent_size)
 
-        return self.observe("planes"), 1.0, self.done, {}
+        return self.observe(), 1.0, self.done, {}
 
     def reset(self, *_args, **_kwargs) -> None:
         self.agent_size = 1
@@ -236,9 +240,9 @@ class SrYvlLvl0Env(Env):
             "health": deque(maxlen=max_buffer),
         }
 
-        return self.observe("planes")
+        return self.observe()
 
-    def observe(self, mode="planes") -> np.array:
+    def observe(self, mode="flattened_planes") -> np.array:
         r = self.observation_radius
         y = self.agent_position[0]
         x = self.agent_position[1]
@@ -246,8 +250,8 @@ class SrYvlLvl0Env(Env):
 
         window = self.world[y0:y1, x0:x1]
         if mode == "indexed":
-            return window
-        if mode == "planes":
+            return window.flatten()
+        if mode in ("planes", 'flattened_planes'):
             """
             planes:
             1: Boundary
@@ -264,7 +268,7 @@ class SrYvlLvl0Env(Env):
             distances_from_center = self._distances_from_center[y0:y1, x0:x1]
             history = self._draw_history_map()[y0:y1, x0:x1]
 
-            return np.array(
+            obs = np.array(
                 [
                     boundary,
                     terrain,
@@ -274,6 +278,10 @@ class SrYvlLvl0Env(Env):
                     history,
                 ]
             )
+            if mode == "flattened_planes":
+                obs = obs.flatten()
+            return obs
+
 
     def sample_action(self):
         mask = self.legal_actions.astype(float)
@@ -307,16 +315,17 @@ class SrYvlLvl0Env(Env):
                 chance = food.age / (self.food_expiry_period**1.5) > np.random.rand()
                 if chance:
                     random_position = self._get_random_position_nearby(growth_window)
-                    # Converting from window indices to world indices
-                    random_position[0] += food.position[0] - self.food_growth_radius
-                    random_position[1] += food.position[1] - self.food_growth_radius
                     if random_position is not None:
-                        more_foods.append(
-                            Food(
-                                random_position,
-                                self.food_expiry_period,
+                        # Converting from window indices to world indices
+                        random_position[0] += food.position[0] - self.food_growth_radius
+                        random_position[1] += food.position[1] - self.food_growth_radius
+                        if random_position is not None:
+                            more_foods.append(
+                                Food(
+                                    random_position,
+                                    self.food_expiry_period,
+                                )
                             )
-                        )
         self.stats_agg['n_foods_generated'].append(len(more_foods))
         self.foods.extend(more_foods)
         self.stats_agg['n_foods_available'].append(len(self.foods))
@@ -487,13 +496,13 @@ def play_random():
 
 
 def human_play():
-    env = SrYvlLvl0Env(size_threshold_to_jump=0.8)
+    env = SrYvlLvl0Env()
     import matplotlib.pyplot as plt
 
     while not env.done:
         img = env.render(mode="world_console")
         # plt.imshow(img)
-        plt.show()
+        # plt.show()
         inp = input("wasde input: ")
         key = "eawds"
         if inp not in key:
@@ -549,4 +558,4 @@ def perlin():
 
 
 if __name__ == "__main__":
-    play_random()
+    human_play()
