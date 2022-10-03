@@ -177,7 +177,12 @@ very_large_poisonous_plant = [
     [7, 3, STEM],
 ]
 
-poisons = [small_poisonous_plant, medium_poisonous_plant, large_poisonous_plant, very_large_poisonous_plant]
+poisons = [
+    small_poisonous_plant,
+    medium_poisonous_plant,
+    large_poisonous_plant,
+    very_large_poisonous_plant,
+]
 
 agent = [
     [1, 6, SKIN],
@@ -226,13 +231,13 @@ poison_in_hand = [
 
 
 def build_cell(
-        content,
-        energy_level=1.0,
-        reddish_threshold=0.2,
-        jumper_threshold=1.5,
-        distance_from_center=0.0,
-        terrain_background=False,
-        is_boundary=False,
+    content,
+    energy_level=1.0,
+    reddish_threshold=0.2,
+    jumper_threshold=1.5,
+    distance_from_center=0.0,
+    terrain_background=False,
+    is_boundary=False,
 ):
     cell = np.ones((3, 9, 9), dtype=int)
 
@@ -259,7 +264,12 @@ def build_cell(
     return cell
 
 
-def make_obs(window, plant_inventory: int, poison_inventory: int, jumper_threshold: float):
+def make_obs(
+    window,
+    plant_inventory: int,
+    poison_inventory: int,
+    jumper_threshold: float,
+):
     """
     planes:
     1: Boundary
@@ -270,7 +280,7 @@ def make_obs(window, plant_inventory: int, poison_inventory: int, jumper_thresho
     6: Dist b/w center of the map to each point
     7: Previous path of the player health
     """
-    img = np.zeros((3, 7*9, 7*9), dtype=np.uint8)
+    img = np.zeros((3, 7 * 9, 7 * 9), dtype=np.uint8)
     for i in range(7):
         for j in range(7):
             (
@@ -280,7 +290,7 @@ def make_obs(window, plant_inventory: int, poison_inventory: int, jumper_thresho
                 poison_age,
                 health,
                 distance,
-                _
+                _,
             ) = window[:, i, j]
 
             content = []
@@ -289,11 +299,19 @@ def make_obs(window, plant_inventory: int, poison_inventory: int, jumper_thresho
                 plant_offset = [[x[0], x[1] + 1, x[2]] for x in plant_content]
                 agent_offset = [[x[0], x[1] - 2, x[2]] for x in agent]
                 content = plant_offset + agent_offset
+                if plant_inventory > 0:
+                    content.append([4, 0, PETAL_GOOD])
+                if poison_inventory > 0:
+                    content.append([6, 0, PETAL_BAD])
             elif poison_age > 0 and health > 0:
                 plant_content = poisons[int(poison_age * len(poisons))]
                 plant_offset = [[x[0], x[1] + 1, x[2]] for x in plant_content]
                 agent_offset = [[x[0], x[1] - 2, x[2]] for x in agent]
                 content = plant_offset + agent_offset
+                if plant_inventory > 0:
+                    content.append([4, 0, PETAL_GOOD])
+                if poison_inventory > 0:
+                    content.append([6, 0, PETAL_BAD])
             elif plant_age > 0:
                 # Index of the size of the plant. (binning)
                 plant_size_category = int(plant_age * len(plants))
@@ -318,17 +336,20 @@ def make_obs(window, plant_inventory: int, poison_inventory: int, jumper_thresho
                 terrain_background=terrain > 0,
                 is_boundary=boundary > 0,
             )
-            img[:, i*9: (i+1) * 9, j*9: (j+1) * 9] = cell
+            img[:, i * 9 : (i + 1) * 9, j * 9 : (j + 1) * 9] = cell
     return img
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import matplotlib
-    matplotlib.use('TkAgg')
+
+    matplotlib.use("TkAgg")
     from matplotlib import pyplot as plt
 
     # cell = np.ones_like(build_cell([])) * 75
-    cell = build_cell(agent + plant_in_hand + poison_in_hand, energy_level=1, distance_from_center=0.9)
+    cell = build_cell(
+        agent + plant_in_hand + poison_in_hand, energy_level=1, distance_from_center=0.9
+    )
 
     cell = np.moveaxis(cell, 0, -1)
     plt.imshow(cell)
