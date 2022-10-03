@@ -5,8 +5,8 @@ from gym.spaces import Discrete, Box
 import numpy as np
 from functools import reduce
 from collections import deque
+from sryvl.envs.sryvl_v0.assets import make_obs
 
-from envs.sryvl_v0.assets import make_obs
 
 np.set_printoptions(linewidth=10000, threshold=np.inf)
 
@@ -146,13 +146,13 @@ class SrYvlLvl0Env(Env):
         else:
             """
             planes:
-            1: Boundary
-            2: Terrain
-            3: Food Ages
-            4: Poison Ages
-            5: Player Health
-            6: Dist b/w center of the map to each point
-            7: Previous path of the player health
+            0: Boundary
+            1: Terrain
+            2: Food Ages
+            3: Poison Ages
+            4: Player Health
+            5: Dist b/w center of the map to each point
+            6: Previous path of the player health
             """
 
             r = self.observation_radius
@@ -324,7 +324,9 @@ class SrYvlLvl0Env(Env):
         more_foods = []
         for food in self.foods:
             growth_window = self._get_food_growth_window(food)
+            # Cannot grow more than the set density
             if not self._enough_food_already_exists_nearby(growth_window):
+                # Older plants will have higher probability of growing more plants
                 chance = food.age / (self.food_expiry_period**1.5) > np.random.rand()
                 if chance:
                     random_position = self._get_random_position_nearby(growth_window)
@@ -364,7 +366,7 @@ class SrYvlLvl0Env(Env):
         side = len(self.world)
         history = np.zeros((side, side))
         for position, health in self.agent_history:
-            history[tuple(position)] = health
+            history[tuple(position)] += health
         return history
 
     @staticmethod
