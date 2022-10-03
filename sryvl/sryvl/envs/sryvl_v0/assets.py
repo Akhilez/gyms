@@ -230,10 +230,30 @@ poison_in_hand = [
 ]
 
 
+def skin_color_b(energy_level, jumper_threshold):
+    if energy_level > jumper_threshold:
+        return int((energy_level - jumper_threshold) / (2 - jumper_threshold) * 150)
+    if energy_level > 1:
+        return 0
+    return int((1 - energy_level) * 200)
+
+
+def skin_color_g(energy_level, jumper_threshold):
+    if energy_level < jumper_threshold:
+        return 200
+    else:
+        return 255
+
+
+def skin_color_r(energy_level):
+    if energy_level < 1:
+        return 255
+    return int(155 + (100 - (energy_level - 1) * 100))
+
+
 def build_cell(
     content,
     energy_level=1.0,
-    reddish_threshold=0.2,
     jumper_threshold=1.5,
     distance_from_center=0.0,
     terrain_background=False,
@@ -245,13 +265,11 @@ def build_cell(
         return cell * BOUNDARY
 
     cell *= TERRAIN if terrain_background else 255
-
-    if energy_level < reddish_threshold:
-        skin_color = [255, 100, 100]
-    elif energy_level > jumper_threshold:
-        skin_color = [100, 255, 100]
-    else:
-        skin_color = SKIN
+    skin_color = [
+        skin_color_r(energy_level),
+        skin_color_g(energy_level, jumper_threshold),
+        skin_color_b(energy_level, jumper_threshold),
+    ]
 
     for y, x, color in content:
         if color == SKIN:
@@ -330,7 +348,6 @@ def make_obs(
             cell = build_cell(
                 content,
                 energy_level=health,
-                reddish_threshold=0.2,
                 jumper_threshold=jumper_threshold,
                 distance_from_center=distance,
                 terrain_background=terrain > 0,
