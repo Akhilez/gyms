@@ -24,7 +24,7 @@ ACTION_RIGHT = 3
 ACTION_DOWN = 4
 ACTION_EAT = 5
 ACTION_KILL = 6
-# ACTION_STORE = 7
+ACTION_STORE = 7
 # ACTION_PLANT = 8
 
 POSITION_OFFSETS = {
@@ -35,6 +35,7 @@ POSITION_OFFSETS = {
     ACTION_DOWN: (1, 0),
     ACTION_EAT: (0, 0),
     ACTION_KILL: (0, 0),
+    ACTION_STORE: (0, 0),
 }
 
 
@@ -89,6 +90,7 @@ class SrYvlLvl0Env(Env):
         size_threshold_to_jump=1.5,
         terrain_resolution=8,
         terrain_intensity=0.8,
+        max_inventory=5,
     ):
         super(SrYvlLvl0Env, self).__init__()
 
@@ -108,10 +110,13 @@ class SrYvlLvl0Env(Env):
         self.size_threshold_to_jump = size_threshold_to_jump
         self.terrain_resolution = terrain_resolution
         self.terrain_intensity = terrain_intensity
+        self.max_inventory = max_inventory
 
         self.agent_size = 1
         self.agent_position = [0, 0]
         self.foods: List[Food] = []
+        self.plant_inventory = 0
+        self.poison_inventory = 0
         self.terrain: List[Tuple[int, int]] = []
         self.world = np.array([])
         self.boundary_indices: List[Tuple[int, int]] = []
@@ -184,7 +189,7 @@ class SrYvlLvl0Env(Env):
             if mode == "flattened_planes":
                 obs = obs.flatten()
             else:  # mode == 'rgb_array':
-                obs = make_obs(obs, 0, 0, self.size_threshold_to_jump)
+                obs = make_obs(obs, self.plant_inventory, self.poison_inventory, self.size_threshold_to_jump)
             return obs
 
     def step(self, action: int) -> Tuple[np.array, float, bool, dict]:
@@ -227,6 +232,8 @@ class SrYvlLvl0Env(Env):
             self._kill_food()
 
         # ----- FOODS ------
+        if action == ACTION_STORE:
+            self._store_item()
         [food.step() for food in self.foods]
         self.stats_agg['n_foods_expired'].append(sum([1 for food in self.foods if food.expired]))
         self._clear_expired_foods()
@@ -276,6 +283,8 @@ class SrYvlLvl0Env(Env):
         self.legal_actions = self._find_legal_actions()
         self.done = False
         self.agent_history = []
+        self.plant_inventory = 0
+        self.poison_inventory = 0
         self._distances_from_center = self._get_distances_from_center(side)
 
         max_buffer = 500
@@ -397,6 +406,14 @@ class SrYvlLvl0Env(Env):
         i = [i for i, f in enumerate(self.foods) if tuple(f.position) == tuple(self.agent_position)][0]
         del self.foods[i]
 
+    def _store_item(self):
+        i = [i for i, f in enumerate(self.foods) if tuple(f.position) == tuple(self.agent_position)][0]
+        if self.foods[i].is_poison:
+            self.poison_inventory += 1
+        else:
+            self.plant_inventory += 1
+        del self.foods[i]
+
     def _clear_expired_foods(self):
         self.foods = [food for food in self.foods if not food.expired]
         self.fill_indices(self.world, self.find_indices(self.world, FOOD), NOTHING)
@@ -412,7 +429,7 @@ class SrYvlLvl0Env(Env):
         if self.agent_size <= 0:
             return np.zeros(self.action_space.n)
 
-        nothing, left, up, right, down, eat, kill = 1, 1, 1, 1, 1, 0, 0
+        nothing, left, up, right, down, eat, kill, store = 1, 1, 1, 1, 1, 0, 0, 0
 
         y = self.agent_position[0]
         x = self.agent_position[1]
@@ -441,8 +458,10 @@ class SrYvlLvl0Env(Env):
         if agent_on in (FOOD, POISON):
             eat = 1
             kill = 1
+            if self.plant_inventory + self.poison_inventory < self.max_inventory:
+                store = 1
 
-        return np.array([nothing, left, up, right, down, eat, kill])
+        return np.array([nothing, left, up, right, down, eat, kill, store])
 
     def _get_shrink_rate_movement(self):
         """Linearly increasing function b/w min and max. x axis = agent_size."""
@@ -542,8 +561,8 @@ def human_play():
         img = env.observe()
         plt.imshow(np.moveaxis(img, 0, -1))
         plt.show()
-        inp = input("qawdser input: ")
-        key = "qawdser"
+        inp = input("qawdserc input: ")
+        key = "qawdserc"
         if inp not in key:
             continue
         action = key.index(inp)

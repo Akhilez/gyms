@@ -239,10 +239,11 @@ def skin_color_b(energy_level, jumper_threshold):
 
 
 def skin_color_g(energy_level, jumper_threshold):
+    if energy_level < 1:
+        return 100 + int(energy_level * 100)
     if energy_level < jumper_threshold:
         return 200
-    else:
-        return 255
+    return 255
 
 
 def skin_color_r(energy_level):
@@ -339,7 +340,7 @@ def make_obs(
                 plant_size_category = int(poison_age * len(poisons))
                 content = poisons[plant_size_category]
             elif health > 0:
-                content = agent
+                content = list(agent)
                 if plant_inventory > 0:
                     content += plant_in_hand
                 if poison_inventory > 0:
