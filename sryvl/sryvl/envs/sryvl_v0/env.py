@@ -25,7 +25,8 @@ ACTION_DOWN = 4
 ACTION_EAT = 5
 ACTION_KILL = 6
 ACTION_STORE = 7
-# ACTION_PLANT = 8
+ACTION_PLACE_PLANT = 8
+ACTION_PLACE_POISON = 9
 
 POSITION_OFFSETS = {
     ACTION_NONE: (0, 0),
@@ -36,6 +37,8 @@ POSITION_OFFSETS = {
     ACTION_EAT: (0, 0),
     ACTION_KILL: (0, 0),
     ACTION_STORE: (0, 0),
+    ACTION_PLACE_PLANT: (0, 0),
+    ACTION_PLACE_POISON: (0, 0),
 }
 
 
@@ -234,6 +237,11 @@ class SrYvlLvl0Env(Env):
         # ----- FOODS ------
         if action == ACTION_STORE:
             self._store_item()
+        elif action == ACTION_PLACE_PLANT:
+            self._plant_item(poison=False)
+        elif action == ACTION_PLACE_POISON:
+            self._plant_item(poison=True)
+
         [food.step() for food in self.foods]
         self.stats_agg['n_foods_expired'].append(sum([1 for food in self.foods if food.expired]))
         self._clear_expired_foods()
@@ -414,6 +422,14 @@ class SrYvlLvl0Env(Env):
             self.plant_inventory += 1
         del self.foods[i]
 
+    def _plant_item(self, poison: bool):
+        self.foods.append(Food(list(self.agent_position), self.food_expiry_period, is_poison=poison))
+        self.world[tuple(self.agent_position)] = POISON if poison else FOOD
+        if poison:
+            self.poison_inventory -= 1
+        else:
+            self.plant_inventory -= 1
+
     def _clear_expired_foods(self):
         self.foods = [food for food in self.foods if not food.expired]
         self.fill_indices(self.world, self.find_indices(self.world, FOOD), NOTHING)
@@ -429,7 +445,7 @@ class SrYvlLvl0Env(Env):
         if self.agent_size <= 0:
             return np.zeros(self.action_space.n)
 
-        nothing, left, up, right, down, eat, kill, store = 1, 1, 1, 1, 1, 0, 0, 0
+        nothing, left, up, right, down, eat, kill, store, place_plant, place_poison = 1, 1, 1, 1, 1, 0, 0, 0, 0, 0
 
         y = self.agent_position[0]
         x = self.agent_position[1]
@@ -460,8 +476,12 @@ class SrYvlLvl0Env(Env):
             kill = 1
             if self.plant_inventory + self.poison_inventory < self.max_inventory:
                 store = 1
+        elif self.plant_inventory > 0:
+            place_plant = 1
+        elif self.poison_inventory > 0:
+            place_poison = 1
 
-        return np.array([nothing, left, up, right, down, eat, kill, store])
+        return np.array([nothing, left, up, right, down, eat, kill, store, place_plant, place_poison])
 
     def _get_shrink_rate_movement(self):
         """Linearly increasing function b/w min and max. x axis = agent_size."""
@@ -561,8 +581,8 @@ def human_play():
         img = env.observe()
         plt.imshow(np.moveaxis(img, 0, -1))
         plt.show()
-        inp = input("qawdserc input: ")
-        key = "qawdserc"
+        inp = input("qawdsercfg input: ")
+        key = "qawdsercfg"
         if inp not in key:
             continue
         action = key.index(inp)
