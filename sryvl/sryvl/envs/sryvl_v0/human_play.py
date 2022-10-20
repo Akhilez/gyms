@@ -50,6 +50,7 @@ def main():
         pygame.display.update()
 
     pygame.quit()
+    print(environment.stats_agg)
 
 
 if __name__ == '__main__':

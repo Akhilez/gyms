@@ -65,7 +65,7 @@ class SrYvlLvl0Env(Env):
         ]
     }
     reward_range = (1, 1)
-    action_space = Discrete(6)
+    action_space = Discrete(10)
     observation_space = Box(low=0, high=255, shape=(3, 7*9, 7*9), dtype=np.uint8)
     # observation_space = Box(low=0, high=4, shape=(49,), dtype=int)
     # observation_space = Box(low=0, high=2 * 20, shape=(294,), dtype=np.float64)
@@ -84,13 +84,13 @@ class SrYvlLvl0Env(Env):
         food_expiry_period=50,
         initial_food_density=0.2,
         poison_fraction=0.5,
-        growth_rate_min=0.1,
-        growth_rate_max=0.2,
+        growth_rate_min=0.05,
+        growth_rate_max=0.1,
         shrink_rate_min=0.009,
         shrink_rate_max=0.01,
         movement_shrink_penalty=1.05,
         observation_radius=3,
-        size_threshold_to_jump=1.5,
+        size_threshold_to_jump=1.0,
         terrain_resolution=8,
         terrain_intensity=0.8,
         max_inventory=5,
@@ -219,6 +219,7 @@ class SrYvlLvl0Env(Env):
         """
 
         self.agent_history.append((tuple(self.agent_position), self.agent_size))
+        self.stats_agg['actions'].append(action)
 
         if self.legal_actions[action] == 0:  # Illegal action == Noop
             action = 0
@@ -256,7 +257,7 @@ class SrYvlLvl0Env(Env):
         self.stats_agg['health'].append(self.agent_size)
         self.stats_agg['has_eaten'].append(action == ACTION_EAT)
 
-        return self.observe(), 1.0, self.done, {}
+        return self.observe(), self.reward(), self.done, {}
 
     def reset(self, *_args, **_kwargs) -> None:
         self.agent_size = 1
@@ -300,10 +301,12 @@ class SrYvlLvl0Env(Env):
             "steps": 0,
             "food_eaten": 0,
             'poison_eaten': 0,
+            'actions': deque(maxlen=max_buffer),
             "n_foods_available": deque(maxlen=max_buffer),
             "n_foods_expired": deque(maxlen=max_buffer),
             "n_foods_generated": deque(maxlen=max_buffer),
-            "has_eaten": deque(maxlen=max_buffer),
+            "has_eaten_food": deque(maxlen=max_buffer),
+            "has_killed_poison": deque(maxlen=max_buffer),
             "health": deque(maxlen=max_buffer),
         }
 
@@ -311,6 +314,14 @@ class SrYvlLvl0Env(Env):
 
     def observe(self) -> np.array:
         return self.render(mode="rgb_array")
+
+    def reward(self) -> float:
+        # return (self.stats_agg["steps"] / 100) ** 2 * self.agent_size
+        # return 1.0
+        # return self.agent_size
+        # h = self.stats_agg['health']
+        # return float(len(h) > 1 and (h[-1] > h[-2]))
+        return -float(self.done)
 
     def sample_action(self):
         mask = self.legal_actions.astype(float)
