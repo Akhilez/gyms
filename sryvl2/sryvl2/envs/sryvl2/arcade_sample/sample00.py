@@ -1,6 +1,7 @@
 """
 Platformer Game
 """
+import math
 from random import random
 
 import arcade
@@ -15,6 +16,8 @@ TILE_SCALING = 0.5
 
 # Movement speed of player, in pixels per frame
 PLAYER_MOVEMENT_SPEED = 5
+
+ANGLE_CHANGE = 10
 
 # Speed limit
 MAX_SPEED = 300
@@ -131,16 +134,24 @@ class MyGame(arcade.Window):
         """Called whenever a key is pressed."""
 
         if key == arcade.key.UP or key == arcade.key.W:
-            self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
+            # self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
+            angle = self.player_sprite.radians+(math.pi / 2)
+            print(self.player_sprite.radians)
+            self.player_sprite.change_x = math.cos(angle) * PLAYER_MOVEMENT_SPEED
+            self.player_sprite.change_y = math.sin(angle) * PLAYER_MOVEMENT_SPEED
         elif key == arcade.key.DOWN or key == arcade.key.S:
             self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
         elif key == arcade.key.LEFT or key == arcade.key.A:
-            self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
+            self.player_sprite.angle += ANGLE_CHANGE
         elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
+            self.player_sprite.angle -= ANGLE_CHANGE
 
         if key == arcade.key.F:
             self.player_sprite.forward(5)
+
+        if key == arcade.key.X:
+            self.player_sprite.change_y = 0
+            self.player_sprite.change_x = 0
 
         # # Add some friction
         # if self.player_sprite.change_x > FRICTION:
@@ -179,7 +190,8 @@ class MyGame(arcade.Window):
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
-
+        self.player_sprite.change_y = 0
+        self.player_sprite.change_x = 0
         if key == arcade.key.UP or key == arcade.key.W:
             self.player_sprite.change_y = 0
         elif key == arcade.key.DOWN or key == arcade.key.S:
