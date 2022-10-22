@@ -17,16 +17,16 @@ TILE_SCALING = 0.5
 # Movement speed of player, in pixels per frame
 PLAYER_MOVEMENT_SPEED = 5
 
-ANGLE_CHANGE = 10
+ANGLE_CHANGE = 5
 
 # Speed limit
-MAX_SPEED = 300
+MAX_SPEED = 10
 
 # How fast we accelerate
-ACCELERATION_RATE = 5
+ACCELERATION_RATE = 0.1
 
 # How fast to slow down after we let off the key
-FRICTION = 0.2
+FRICTION = 0.02
 
 
 class MyGame(arcade.Window):
@@ -47,6 +47,12 @@ class MyGame(arcade.Window):
 
         self.player_sprite = None
         self.physics_engine = None
+
+        # Track the current state of what key is pressed
+        self.left_pressed = False
+        self.right_pressed = False
+        self.up_pressed = False
+        self.down_pressed = False
 
         arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
 
@@ -133,76 +139,74 @@ class MyGame(arcade.Window):
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
 
-        if key == arcade.key.UP or key == arcade.key.W:
-            # self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
-            angle = self.player_sprite.radians+(math.pi / 2)
-            print(self.player_sprite.radians)
-            self.player_sprite.change_x = math.cos(angle) * PLAYER_MOVEMENT_SPEED
-            self.player_sprite.change_y = math.sin(angle) * PLAYER_MOVEMENT_SPEED
-        elif key == arcade.key.DOWN or key == arcade.key.S:
-            self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
-        elif key == arcade.key.LEFT or key == arcade.key.A:
-            self.player_sprite.angle += ANGLE_CHANGE
-        elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.player_sprite.angle -= ANGLE_CHANGE
-
-        if key == arcade.key.F:
-            self.player_sprite.forward(5)
+        """Called whenever a key is pressed. """
+        if key == arcade.key.UP:
+            self.up_pressed = True
+        elif key == arcade.key.DOWN:
+            self.down_pressed = True
+        elif key == arcade.key.LEFT:
+            self.left_pressed = True
+        elif key == arcade.key.RIGHT:
+            self.right_pressed = True
 
         if key == arcade.key.X:
-            self.player_sprite.change_y = 0
-            self.player_sprite.change_x = 0
-
-        # # Add some friction
-        # if self.player_sprite.change_x > FRICTION:
-        #     self.player_sprite.change_x -= FRICTION
-        # elif self.player_sprite.change_x < -FRICTION:
-        #     self.player_sprite.change_x += FRICTION
-        # else:
-        #     self.player_sprite.change_x = 0
-        #
-        # if self.player_sprite.change_y > FRICTION:
-        #     self.player_sprite.change_y -= FRICTION
-        # elif self.player_sprite.change_y < -FRICTION:
-        #     self.player_sprite.change_y += FRICTION
-        # else:
-        #     self.player_sprite.change_y = 0
-        #
-        # # Apply acceleration based on the keys pressed
-        # if key == arcade.key.UP or key == arcade.key.W:
-        #     self.player_sprite.change_y += ACCELERATION_RATE
-        #     # self.physics_engine.apply_force(self.player_sprite, (0, ACCELERATION_RATE))
-        # elif key == arcade.key.DOWN or key == arcade.key.S:
-        #     self.player_sprite.change_y += -ACCELERATION_RATE
-        # elif key == arcade.key.LEFT or key == arcade.key.A:
-        #     self.player_sprite.change_x += -ACCELERATION_RATE
-        # elif key == arcade.key.RIGHT or key == arcade.key.D:
-        #     self.player_sprite.change_x += ACCELERATION_RATE
-        #
-        # if self.player_sprite.change_x > MAX_SPEED:
-        #     self.player_sprite.change_x = MAX_SPEED
-        # elif self.player_sprite.change_x < -MAX_SPEED:
-        #     self.player_sprite.change_x = -MAX_SPEED
-        # if self.player_sprite.change_y > MAX_SPEED:
-        #     self.player_sprite.change_y = MAX_SPEED
-        # elif self.player_sprite.change_y < -MAX_SPEED:
-        #     self.player_sprite.change_y = -MAX_SPEED
+            print(self.player_sprite.position)
+            crop_h, crop_w = 700, 700
+            arcade.get_image(SCREEN_WIDTH // 2 - crop_w//2, SCREEN_HEIGHT // 2 - crop_h//2, crop_h, crop_h).save('screenshot.png', 'PNG')
 
     def on_key_release(self, key, modifiers):
-        """Called when the user releases a key."""
-        self.player_sprite.change_y = 0
-        self.player_sprite.change_x = 0
-        if key == arcade.key.UP or key == arcade.key.W:
-            self.player_sprite.change_y = 0
-        elif key == arcade.key.DOWN or key == arcade.key.S:
-            self.player_sprite.change_y = 0
-        elif key == arcade.key.LEFT or key == arcade.key.A:
-            self.player_sprite.change_x = 0
-        elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.player_sprite.change_x = 0
+        """Called when the user releases a key. """
+
+        if key == arcade.key.UP:
+            self.up_pressed = False
+        elif key == arcade.key.DOWN:
+            self.down_pressed = False
+        elif key == arcade.key.LEFT:
+            self.left_pressed = False
+        elif key == arcade.key.RIGHT:
+            self.right_pressed = False
 
     def on_update(self, delta_time):
         """Movement and game logic"""
+
+        # Add some friction
+        if self.player_sprite.change_x > FRICTION:
+            self.player_sprite.change_x -= FRICTION
+        elif self.player_sprite.change_x < -FRICTION:
+            self.player_sprite.change_x += FRICTION
+        else:
+            self.player_sprite.change_x = 0
+
+        if self.player_sprite.change_y > FRICTION:
+            self.player_sprite.change_y -= FRICTION
+        elif self.player_sprite.change_y < -FRICTION:
+            self.player_sprite.change_y += FRICTION
+        else:
+            self.player_sprite.change_y = 0
+
+        # Apply acceleration based on the keys pressed
+        if self.up_pressed and not self.down_pressed:
+            # self.player_sprite.change_y += ACCELERATION_RATE
+            angle = self.player_sprite.radians + (math.pi / 2)
+            self.player_sprite.change_x = ((math.cos(angle) * PLAYER_MOVEMENT_SPEED) + self.player_sprite.change_x) / 2
+            self.player_sprite.change_y = ((math.sin(angle) * PLAYER_MOVEMENT_SPEED) + self.player_sprite.change_y) / 2
+        elif self.down_pressed and not self.up_pressed:
+            angle = self.player_sprite.radians + (math.pi / 2)
+            self.player_sprite.change_x = -math.cos(angle) * PLAYER_MOVEMENT_SPEED
+            self.player_sprite.change_y = -math.sin(angle) * PLAYER_MOVEMENT_SPEED
+        if self.left_pressed and not self.right_pressed:
+            self.player_sprite.angle += ANGLE_CHANGE
+        elif self.right_pressed and not self.left_pressed:
+            self.player_sprite.angle -= ANGLE_CHANGE
+
+        if self.player_sprite.change_x > MAX_SPEED:
+            self.player_sprite.change_x = MAX_SPEED
+        elif self.player_sprite.change_x < -MAX_SPEED:
+            self.player_sprite.change_x = -MAX_SPEED
+        if self.player_sprite.change_y > MAX_SPEED:
+            self.player_sprite.change_y = MAX_SPEED
+        elif self.player_sprite.change_y < -MAX_SPEED:
+            self.player_sprite.change_y = -MAX_SPEED
 
         # Move the player with the physics engine
         self.physics_engine.update()
