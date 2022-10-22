@@ -5,7 +5,7 @@ from sryvl2.game import Game
 class App:
     def __init__(self):
         pygame.init()
-        self._game = Game(mode='human_single_player')
+        self._game = Game(params='human_single_player')
         self.p = self._game.params
         self.player = self._game.objects_manager.characters[0]
         self._display = pygame.display.set_mode(

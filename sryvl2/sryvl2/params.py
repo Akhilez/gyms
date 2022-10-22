@@ -11,11 +11,17 @@ class RulesParams(BaseModel):
 
 
 class WorldParams(BaseModel):
-    pass
+    height: int = 1_000
+    width: int = 1_000
+
+
+class CharacterParams(BaseModel):
+    initial_mass: float = 10
+    size: float = 50
 
 
 class ObjectsManagerParams(BaseModel):
-    pass
+    character: CharacterParams = CharacterParams()
 
 
 class StatsParams(BaseModel):

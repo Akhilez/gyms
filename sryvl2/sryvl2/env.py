@@ -1,7 +1,7 @@
-from typing import Optional, Union, List, Tuple, Mapping
+from typing import Optional, Union, List, Mapping
 import numpy as np
 from gym import Env
-from gym.core import RenderFrame, ActType, ObsType
+from gym.core import RenderFrame, ActType
 from gym.envs.registration import EnvSpec
 from gym.spaces import Box
 from sryvl2.game import Game

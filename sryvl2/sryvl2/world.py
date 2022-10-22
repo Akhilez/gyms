@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from pymunk import Space
 if TYPE_CHECKING:
     from sryvl2.game import Game
 
@@ -16,5 +17,7 @@ class World:
         
         """
 
+        self.space = Space()
+
     def step(self):
-        pass
+        self.space.step(dt=1.0 / self.game.params.ui.fps)
