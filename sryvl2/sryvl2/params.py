@@ -42,6 +42,8 @@ class Params(BaseModel):
             return Params()
         if mode == 'human_single_player':
             return Params()
+        if mode == 'rl':
+            return Params()
 
 
 def test_params():

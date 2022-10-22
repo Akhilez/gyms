@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 from gym.spaces import Tuple, Discrete, Box
 
 
-action_space = Tuple((Box(-1, 1, shape=(2,)), Discrete(2)))
+ACTION_SPACE = Tuple((Box(-1, 1, shape=(2,)), Discrete(2)))
 
 
 class Rules:
