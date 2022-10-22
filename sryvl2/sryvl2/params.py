@@ -23,7 +23,9 @@ class StatsParams(BaseModel):
 
 
 class UIParams(BaseModel):
-    pass
+    height: int = 224
+    width: int = 224
+    fps: float = 6
 
 
 class Params(BaseModel):
@@ -33,6 +35,13 @@ class Params(BaseModel):
     objects_manager: ObjectsManagerParams = ObjectsManagerParams()
     stats: StatsParams = StatsParams()
     ui: UIParams = UIParams()
+
+    @staticmethod
+    def make(mode='default'):
+        if mode == 'default':
+            return Params()
+        if mode == 'human_single_player':
+            return Params()
 
 
 def test_params():

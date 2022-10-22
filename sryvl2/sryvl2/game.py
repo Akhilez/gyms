@@ -8,8 +8,8 @@ from sryvl2.world import World
 
 
 class Game:
-    def __init__(self):
-        self.params = Params()
+    def __init__(self, mode='default'):
+        self.params = Params.make(mode)
         self.episode_manager = EpisodeManager(self)
         self.rules = Rules(self)
         self.world = World(self)
