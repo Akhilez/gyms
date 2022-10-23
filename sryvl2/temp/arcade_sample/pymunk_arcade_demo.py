@@ -1,3 +1,5 @@
+import math
+
 import arcade
 import pymunk
 
@@ -5,6 +7,7 @@ H = 500
 W = 500
 
 FORCE = 500.0
+ROTATION_SPEED = 0.005  # radians
 
 
 class MyWindow(arcade.Window):
@@ -13,6 +16,8 @@ class MyWindow(arcade.Window):
         arcade.set_background_color(arcade.color.AMAZON)
         self.space = pymunk.Space()
         self.space.damping = 0.9
+
+        # Create boundary
         static = [
             pymunk.Segment(self.space.static_body, (50, 50), (50, 450), 5),
             pymunk.Segment(self.space.static_body, (50, 450), (450, 450), 5),
@@ -21,21 +26,35 @@ class MyWindow(arcade.Window):
         ]
         for s in static:
             s.elasticity = .9
+            s.friction = 0.1
         self.space.add(*static)
         self.boundaries = static
+
+        # Create player
+        self.player = pymunk.Circle(pymunk.Body(mass=1, moment=1), radius=20)
+        # self.player.mass = 1
+        self.player.body.position = (100, 100)
+        self.player.friction = 0.1
+        self.space.add(self.player.body, self.player)
+        print('moment: ', self.player.body.moment)
 
         # Initialize Scene
         self.scene = arcade.Scene()
 
         # Create the Sprite lists
         self.scene.add_sprite_list("Walls", use_spatial_hash=True)
+        self.scene.add_sprite_list("Player")
 
-        # Create player
-        self.player = pymunk.Circle(pymunk.Body(), radius=20)
-        self.player.mass = 1
-        self.player.body.position = (100, 100)
-        self.player.friction = 0.1
-        self.space.add(self.player.body, self.player)
+        # Set up the player, specifically placing it at these coordinates.
+        image_source = ":resources:images/space_shooter/playerShip3_orange.png"
+        self.player_sprite = arcade.Sprite(
+            image_source,
+            scale=40 / 128,
+            angle=self.player.body.angle,
+            center_x=self.player.body.position.x,
+            center_y=self.player.body.position.y,
+        )
+        self.scene.add_sprite("Player", self.player_sprite)
 
         # Track the current state of what key is pressed
         self.left_pressed = False
@@ -55,15 +74,25 @@ class MyWindow(arcade.Window):
                 force=force, point=(0, 0)
             )
         if self.left_pressed and not self.right_pressed:
+            # self.player.body.angle += ROTATION_SPEED
             force = (-FORCE, 0)
             self.player.body.apply_force_at_local_point(
                 force=force, point=(0, 0)
             )
         elif self.right_pressed and not self.left_pressed:
+            # self.player.body.angle -= ROTATION_SPEED
             force = (FORCE, 0)
             self.player.body.apply_force_at_local_point(
                 force=force, point=(0, 0)
             )
+
+        velocity = self.player.body.velocity_at_local_point((0, 0))
+        velocity_angle = self.get_angle((0, 1), (0, 0), velocity)
+        rotation = min(velocity_angle, ROTATION_SPEED)
+        if velocity.x < 0:
+            self.player.body.angle += rotation
+        elif velocity.x > 0:
+            self.player.body.angle -= rotation
         self.space.step(dt)
 
     def on_draw(self):
@@ -87,6 +116,12 @@ class MyWindow(arcade.Window):
             radius=self.player.radius,
             color=arcade.color.RED,
         )
+
+        self.player_sprite.position = self.player.body.position
+        self.player_sprite.radians = self.player.body.angle
+
+        # Draw our Scene
+        self.scene.draw()
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed. """
@@ -112,7 +147,14 @@ class MyWindow(arcade.Window):
         elif key == arcade.key.RIGHT:
             self.right_pressed = False
 
+    @staticmethod
+    def get_angle(a, b, c):
+        ang = math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(a[1] - b[1], a[0] - b[0])
+        return abs(ang)
+
 
 if __name__ == '__main__':
+    # TODO: Factoring rotation and force = have controls to rotate and move.
     window = MyWindow()
     arcade.run()
+    # print(MyWindow.get_angle((0, 1), (0, 0), (1, 0)))
