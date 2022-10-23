@@ -13,6 +13,7 @@ class RulesParams(BaseModel):
 class WorldParams(BaseModel):
     height: int = 1_000
     width: int = 1_000
+    damping: float = 0.9
 
 
 class CharacterParams(BaseModel):
