@@ -32,6 +32,7 @@ class App:
 
     def on_render(self):
         image = self.player.render()
+        # print(image.shape)
         self._display.blit(pygame.surfarray.make_surface(image), (0, 0))
         pygame.display.update()
 

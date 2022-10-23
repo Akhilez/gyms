@@ -19,8 +19,10 @@ class Character:
         self.has_lost: bool = False
 
         self.body = Body()
-        self.body.position.x = random() * self.game.params.world.width
-        self.body.position.y = random() * self.game.params.world.height
+        self.body.position = (
+            random() * self.game.params.world.width,
+            random() * self.game.params.world.height
+        )
         self.shape = Circle(self.body, radius=self.p.size)
         self.shape.mass = self.p.initial_mass
         self.shape.friction = 1
