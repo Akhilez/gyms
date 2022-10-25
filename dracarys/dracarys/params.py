@@ -30,8 +30,8 @@ class StatsParams(BaseModel):
 
 
 class UIParams(BaseModel):
-    height: int = 224
-    width: int = 224
+    height: int = 1000
+    width: int = 1000
     fps: float = 6
 
 

@@ -32,8 +32,10 @@ class App:
 
     def on_render(self):
         image = self.player.render()
+        image = image.transpose((1, 0, 2))
         # print(image.shape)
         self._display.blit(pygame.surfarray.make_surface(image), (0, 0))
+        pygame.display.flip()
         pygame.display.update()
 
     def on_cleanup(self):
