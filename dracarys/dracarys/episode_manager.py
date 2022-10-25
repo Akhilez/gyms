@@ -17,7 +17,7 @@ class EpisodeManager:
         self.frame += 1
         if self.is_new_timestep():
             self.timestep += 1
-            if self.timestep >= self.params.total_episodes:
+            if self.timestep >= self.params.total_timesteps:
                 self.ended = True
 
     def is_new_timestep(self):

@@ -13,7 +13,10 @@ class ObjectsManager:
         self.characters = self._generate_characters()
 
     def step(self):
-        pass
+        for character in self.characters:
+            character.step()
+        # Clean up any dead characters
+        # Spawn any new characters
 
     def _generate_characters(self) -> List[Character]:
         return [Character(self.game)]

@@ -1,3 +1,5 @@
+import math
+
 from pydantic import BaseModel
 
 
@@ -18,11 +20,16 @@ class WorldParams(BaseModel):
 
 class CharacterParams(BaseModel):
     initial_mass: float = 10
-    size: float = 50
+    size: float = 15
+
+
+class DragonParams(CharacterParams):
+    rotation_max_speed: float = math.pi / 8
+    force_max: float = 1000.0
 
 
 class ObjectsManagerParams(BaseModel):
-    character: CharacterParams = CharacterParams()
+    dragon: DragonParams = DragonParams()
 
 
 class StatsParams(BaseModel):
@@ -30,9 +37,9 @@ class StatsParams(BaseModel):
 
 
 class UIParams(BaseModel):
-    height: int = 224
-    width: int = 224
-    fps: float = 6
+    height: int = 1000
+    width: int = 1000
+    fps: float = 30
 
 
 class Params(BaseModel):

@@ -12,11 +12,11 @@ class Game:
     def __init__(self, params: Union[str, Params] = 'default'):
         self.params = Params.make(params) if type(params) is str else params
         self.episode_manager = EpisodeManager(self)
+        self.ui_manager = UIManager(self)
         self.rules = Rules(self)
         self.world = World(self)
         self.objects_manager = ObjectsManager(self)
         self.stats = Stats(self)
-        self.ui_manager = UIManager(self)
 
     def step(self):
         self.episode_manager.step()
