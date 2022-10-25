@@ -3,6 +3,7 @@ from random import random
 from typing import TYPE_CHECKING
 import numpy as np
 from pymunk import Body, Circle
+
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.rules import ACTION_SPACE
@@ -12,6 +13,7 @@ class Character:
     def __init__(self, game: Game):
         self.game = game
         self.p = game.params.objects_manager.character
+        self._health = 100
 
         self.action_mask = [None, [1, 1]]
         self.has_lost: bool = False
@@ -32,3 +34,9 @@ class Character:
 
     def render(self) -> np.array:
         return self.game.ui_manager.render_for(self)
+
+    def get_health(self) -> float:
+        return self._health
+
+    def set_health(self, health: float) -> None:
+        self._health = health
