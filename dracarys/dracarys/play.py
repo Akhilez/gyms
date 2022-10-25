@@ -37,6 +37,7 @@ class App:
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_w:
+                print("w pressed")
                 self.up_pressed = True
             elif event.key == pygame.K_s:
                 self.down_pressed = True
@@ -68,16 +69,16 @@ class App:
             elif event.key == pygame.K_SPACE:
                 self.fire_pressed = False
 
-        self._set_actions()
-
     def on_loop(self):
         if self.player.has_lost:
             self._running = False
 
+        self._set_actions()
+        self._game.step()
+
     def on_render(self):
         image = self.player.render()
         image = image.transpose((1, 0, 2))
-        # print(image.shape)
         self._display.blit(pygame.surfarray.make_surface(image), (0, 0))
         pygame.display.flip()
         pygame.display.update()

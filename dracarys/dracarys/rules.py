@@ -60,6 +60,7 @@ class Rules:
         opponent.set_health(opponent.get_health - (dragon.power * 3))
         if dragon.get_health() < 0:
             # dead - execute some sort of dead rule/ event
+            pass
 
     def food_storage(self, dragon, storage):
         dragon.set_storage(dragon.get_storage + storage)
