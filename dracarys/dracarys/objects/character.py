@@ -1,13 +1,11 @@
 from __future__ import annotations
-
 from random import random
 from typing import TYPE_CHECKING
 import numpy as np
 from pymunk import Body, Circle
-
 if TYPE_CHECKING:
-    from sryvl2.game import Game
-from sryvl2.rules import ACTION_SPACE
+    from dracarys.game import Game
+from dracarys.rules import ACTION_SPACE
 
 
 class Character:

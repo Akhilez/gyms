@@ -1,5 +1,5 @@
 import pygame
-from sryvl2.game import Game
+from dracarys.game import Game
 
 
 class App:

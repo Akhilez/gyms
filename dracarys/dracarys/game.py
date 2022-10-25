@@ -1,11 +1,11 @@
 from typing import Union
-from sryvl2.episode_manager import EpisodeManager
-from sryvl2.objects_manager import ObjectsManager
-from sryvl2.params import Params
-from sryvl2.rules import Rules
-from sryvl2.stats import Stats
-from sryvl2.ui_manager import UIManager
-from sryvl2.world import World
+from dracarys.episode_manager import EpisodeManager
+from dracarys.objects_manager import ObjectsManager
+from dracarys.params import Params
+from dracarys.rules import Rules
+from dracarys.stats import Stats
+from dracarys.ui_manager import UIManager
+from dracarys.world import World
 
 
 class Game:

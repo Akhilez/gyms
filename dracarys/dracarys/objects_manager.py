@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import List
-from sryvl2.objects.character import Character
+from dracarys.objects.character import Character
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from sryvl2.game import Game
+    from dracarys.game import Game
 
 
 class ObjectsManager:

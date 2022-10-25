@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from sryvl2.game import Game
+    from dracarys.game import Game
 
 
 class EpisodeManager:

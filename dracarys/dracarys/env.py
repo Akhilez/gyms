@@ -4,9 +4,9 @@ from gym import Env
 from gym.core import RenderFrame, ActType
 from gym.envs.registration import EnvSpec
 from gym.spaces import Box
-from sryvl2.game import Game
-from sryvl2.params import Params
-from sryvl2.rules import ACTION_SPACE
+from dracarys.game import Game
+from dracarys.params import Params
+from dracarys.rules import ACTION_SPACE
 
 
 P = Params.make('rl')
