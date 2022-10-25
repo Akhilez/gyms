@@ -28,6 +28,8 @@ class UIManager:
         # Set up the Camera
         self.camera = arcade.Camera(self.game.params.world.width, self.game.params.world.width)
 
+        arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
+
     def step(self):
         pass
 
@@ -45,7 +47,7 @@ class UIManager:
         cx, cy = character.body.position
 
         # Position the camera
-        # self._center_camera_to_player(cx, cy)
+        self._center_camera_to_player(cx, cy)
 
         # Draw our Scene
         self.scene.draw()
@@ -53,13 +55,12 @@ class UIManager:
         # Activate our Camera
         self.camera.use()
 
-        return self.get_screenshot(
-            cx,
-            cy,
-            character.body.angle
-        )
+        return self.get_screenshot(character.body.angle)
 
     def draw_world(self):
+
+
+
         # Create boundaries
         # This shows using a loop to place multiple sprites horizontally
         for s in self.game.world.boundaries:
@@ -75,14 +76,27 @@ class UIManager:
     def draw_objects(self):
         self.game.objects_manager.characters[0].draw()
 
-    def get_screenshot(self, x, y, angle):
-        diag = self.params.width  # + self.params.height  # heuristic
-        x = x - diag // 2
-        y = y - diag // 2
-        image = arcade.get_image(x, y, diag, diag)
+    def get_screenshot(self, angle):
+        x = self.params.width // 2
+        y = self.params.height // 2
+        # image = arcade.get_image(x, y, diag, diag)
+        image = arcade.get_image(x, y, self.params.width, self.params.height)
 
         image = image.rotate(-math.degrees(angle))
 
         image = np.asarray(image)  # shape (h, w, 4) (RGBA)
         image = image[:, :, :3]  # shape (h, w, 3)  Got rid of alpha channel
         return image
+
+    def _center_camera_to_player(self, x, y):
+        screen_center_x = x - (self.camera.viewport_width / 2)
+        screen_center_y = y - (self.camera.viewport_height / 2)
+
+        # # Don't let camera travel past 0
+        # if screen_center_x < 0:
+        #     screen_center_x = 0
+        # if screen_center_y < 0:
+        #     screen_center_y = 0
+        player_centered = screen_center_x, screen_center_y
+
+        self.camera.move_to(player_centered)
