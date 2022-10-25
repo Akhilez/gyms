@@ -77,15 +77,16 @@ class UIManager:
         self.game.objects_manager.characters[0].draw()
 
     def get_screenshot(self, angle):
-        x = self.params.width // 2
-        y = self.params.height // 2
-        # image = arcade.get_image(x, y, diag, diag)
-        image = arcade.get_image(x, y, self.params.width, self.params.height)
+        w = self.params.width * 2
+        h = self.params.height * 2
+        image = arcade.get_image(0, 0, w, h)
 
         image = image.rotate(-math.degrees(angle))
+        # image = image.resize((self.params.width, self.params.height))
 
         image = np.asarray(image)  # shape (h, w, 4) (RGBA)
         image = image[:, :, :3]  # shape (h, w, 3)  Got rid of alpha channel
+        image = image[w // 4: w // 4 * 3, h // 4: h // 4 * 3, :]
         return image
 
     def _center_camera_to_player(self, x, y):

@@ -25,7 +25,7 @@ class CharacterParams(BaseModel):
 
 class DragonParams(CharacterParams):
     rotation_max_speed: float = math.pi / 32
-    force_max: float = 200.0
+    force_max: float = 500.0
 
 
 class ObjectsManagerParams(BaseModel):
