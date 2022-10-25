@@ -1,7 +1,6 @@
 from __future__ import annotations
 from random import random
 from typing import TYPE_CHECKING
-
 import arcade
 import numpy as np
 from pymunk import Body, Circle
@@ -20,9 +19,8 @@ class Character:
 
         self.body = Body()
         self.body.position = (
-            # random() * self.game.params.world.width,
-            # random() * self.game.params.world.height
-            100, 200
+            random() * self.game.params.world.width,
+            random() * self.game.params.world.height
         )
         self.shape = Circle(self.body, radius=self.p.size)
         self.shape.mass = self.p.initial_mass

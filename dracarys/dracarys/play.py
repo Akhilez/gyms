@@ -1,6 +1,9 @@
 import pygame
 from dracarys.game import Game
 
+FORCE = 0.5
+ROTATION = 0.5
+
 
 class App:
     def __init__(self):
@@ -15,16 +18,57 @@ class App:
         self._clock = pygame.time.Clock()
         self._running = True
 
-        self.actions = [0.0, 0.0, 0]
+        self.actions = [[0.0, 0.0, 0.0], 0]
 
         self.player.policy = lambda **_: self.actions
+
+        # Track the current state of what key is pressed
+        self.left_pressed = False
+        self.right_pressed = False
+        self.up_pressed = False
+        self.down_pressed = False
+        self.turn_left = False
+        self.turn_right = False
+        self.fire_pressed = False
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
             self._running = False
-        # TODO: Read keyboard events or something and set actions.
-        #       Also reset when keys are released.
-        self.actions = [0.0, 0.1, 0]
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_w:
+                self.up_pressed = True
+            elif event.key == pygame.K_s:
+                self.down_pressed = True
+            elif event.key == pygame.K_a:
+                self.left_pressed = True
+            elif event.key == pygame.K_d:
+                self.right_pressed = True
+            elif event.key == pygame.K_q:
+                self.turn_left = True
+            elif event.key == pygame.K_e:
+                self.turn_right = True
+            elif event.key == pygame.K_SPACE:
+                self.fire_pressed = True
+
+        # User let up on a key
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_w:
+                self.up_pressed = False
+            elif event.key == pygame.K_s:
+                self.down_pressed = False
+            elif event.key == pygame.K_a:
+                self.left_pressed = False
+            elif event.key == pygame.K_d:
+                self.right_pressed = False
+            elif event.key == pygame.K_q:
+                self.turn_left = False
+            elif event.key == pygame.K_e:
+                self.turn_right = False
+            elif event.key == pygame.K_SPACE:
+                self.fire_pressed = False
+
+        self._set_actions()
 
     def on_loop(self):
         if self.player.has_lost:
@@ -49,6 +93,23 @@ class App:
             self.on_loop()
             self.on_render()
         self.on_cleanup()
+
+    def _set_actions(self):
+        x, y, r, a = 0.0, 0.0, 0.0, 0
+        if self.up_pressed:
+            y += FORCE
+        if self.down_pressed:
+            y -= FORCE
+        if self.left_pressed:
+            x -= FORCE
+        if self.right_pressed:
+            x += FORCE
+        if self.turn_left:
+            r -= ROTATION
+        if self.turn_right:
+            r += ROTATION
+
+        self.actions = (x, y, r), a
 
 
 if __name__ == "__main__":
