@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import arcade
 import numpy as np
 from pymunk import Body, Circle
+
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.rules import ACTION_SPACE
@@ -47,12 +48,6 @@ class Character:
     def render(self) -> np.array:
         """Used to get a view of the world from the character's perspective."""
         return self.game.ui_manager.render_for(self)
-
-    def get_health(self) -> float:
-        return self._health
-
-    def set_health(self, health: float) -> None:
-        self._health = health
 
     def draw(self):
         """Used to draw self onto arcade scene."""
