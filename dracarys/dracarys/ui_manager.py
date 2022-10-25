@@ -58,20 +58,7 @@ class UIManager:
         return self.get_screenshot(character.body.angle)
 
     def draw_world(self):
-
-
-
-        # Create boundaries
-        # This shows using a loop to place multiple sprites horizontally
-        for s in self.game.world.boundaries:
-            arcade.draw_line(
-                start_x=s.a.x,
-                start_y=s.a.y,
-                end_x=s.b.x,
-                end_y=s.b.y,
-                color=arcade.color.TAN,
-                line_width=s.radius,
-            )
+        pass
 
     def draw_objects(self):
         self.game.objects_manager.characters[0].draw()
@@ -90,14 +77,6 @@ class UIManager:
         return image
 
     def _center_camera_to_player(self, x, y):
-        screen_center_x = x - (self.camera.viewport_width / 2)
-        screen_center_y = y - (self.camera.viewport_height / 2)
-
-        # # Don't let camera travel past 0
-        # if screen_center_x < 0:
-        #     screen_center_x = 0
-        # if screen_center_y < 0:
-        #     screen_center_y = 0
-        player_centered = screen_center_x, screen_center_y
-
-        self.camera.move_to(player_centered)
+        cx = x - (self.camera.viewport_width / 2)
+        cy = y - (self.camera.viewport_height / 2)
+        self.camera.move_to((cx, cy))

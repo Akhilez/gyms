@@ -42,42 +42,41 @@ class World:
         side = 128
         sprite = ":resources:images/tiles/dirtCenter.png"
 
-        # Create bottom wall
-        for x in range(0, self.params.height + side, side):
-            wall = arcade.Sprite(
-                sprite, 1,
-                center_x=x,
-                center_y=-side // 2,
-                angle=270,
-            )
-            self.game.ui_manager.scene.add_sprite("Walls", wall)
+        for layer in range(0, side * 5, side):
+            for x in range(-side * 5, self.params.width + (5*side), side):
+                # Create bottom wall
+                wall = arcade.Sprite(
+                    sprite, 1,
+                    center_x=x,
+                    center_y=-side // 2 - layer,
+                    angle=0,
+                )
+                self.game.ui_manager.scene.add_sprite("Walls", wall)
 
-        # Create left wall
-        for x in range(0, self.params.height + side, side):
-            wall = arcade.Sprite(
-                sprite, 1,
-                center_x=-side//2,
-                center_y=x,
-                angle=270,
-            )
-            self.game.ui_manager.scene.add_sprite("Walls", wall)
+                # Create top wall
+                wall = arcade.Sprite(
+                    sprite, 1,
+                    center_x=x,
+                    center_y=self.params.height + side // 2 + layer,
+                    angle=0,
+                )
+                self.game.ui_manager.scene.add_sprite("Walls", wall)
 
-        # Create right wall
-        for x in range(0, self.params.height + side, side):
-            wall = arcade.Sprite(
-                sprite, 1,
-                center_x=self.params.width + side // 2,
-                center_y=x,
-                angle=90,
-            )
-            self.game.ui_manager.scene.add_sprite("Walls", wall)
+            for x in range(-side * 5, self.params.height + (5*side), side):
+                # Create left wall
+                wall = arcade.Sprite(
+                    sprite, 1,
+                    center_x=-side//2 - layer,
+                    center_y=x,
+                    angle=0,
+                )
+                self.game.ui_manager.scene.add_sprite("Walls", wall)
 
-        # Create top wall
-        for x in range(0, self.params.width + side, side):
-            wall = arcade.Sprite(
-                sprite, 1,
-                center_x=x,
-                center_y=self.params.height + side // 2,
-                angle=180,
-            )
-            self.game.ui_manager.scene.add_sprite("Walls", wall)
+                # Create right wall
+                wall = arcade.Sprite(
+                    sprite, 1,
+                    center_x=self.params.width + side // 2 + layer,
+                    center_y=x,
+                    angle=0,
+                )
+                self.game.ui_manager.scene.add_sprite("Walls", wall)
