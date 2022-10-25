@@ -31,8 +31,8 @@ class MyWindow(arcade.Window):
         self.boundaries = static
 
         # Create player
-        self.player = pymunk.Circle(pymunk.Body(mass=1, moment=1), radius=20)
-        # self.player.mass = 1
+        self.player = pymunk.Circle(pymunk.Body(), radius=20)
+        self.player.mass = 1
         self.player.body.position = (100, 100)
         self.player.friction = 0.1
         self.space.add(self.player.body, self.player)
@@ -61,6 +61,9 @@ class MyWindow(arcade.Window):
         self.right_pressed = False
         self.up_pressed = False
         self.down_pressed = False
+
+        # Set up the Camera
+        self.camera = arcade.Camera(self.width, self.height)
 
     def on_update(self, dt):
         if self.up_pressed and not self.down_pressed:
@@ -95,6 +98,9 @@ class MyWindow(arcade.Window):
             self.player.body.angle -= rotation
         self.space.step(dt)
 
+        # Position the camera
+        self.center_camera_to_player()
+
     def on_draw(self):
         self.clear()
 
@@ -123,6 +129,9 @@ class MyWindow(arcade.Window):
         # Draw our Scene
         self.scene.draw()
 
+        # Activate our Camera
+        self.camera.use()
+
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed. """
 
@@ -146,6 +155,19 @@ class MyWindow(arcade.Window):
             self.left_pressed = False
         elif key == arcade.key.RIGHT:
             self.right_pressed = False
+
+    def center_camera_to_player(self):
+        screen_center_x = self.player_sprite.center_x - (self.camera.viewport_width / 2)
+        screen_center_y = self.player_sprite.center_y - (self.camera.viewport_height / 2)
+
+        # # Don't let camera travel past 0
+        # if screen_center_x < 0:
+        #     screen_center_x = 0
+        # if screen_center_y < 0:
+        #     screen_center_y = 0
+        player_centered = screen_center_x, screen_center_y
+
+        self.camera.move_to(player_centered)
 
     @staticmethod
     def get_angle(a, b, c):
