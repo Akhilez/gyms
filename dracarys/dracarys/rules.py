@@ -59,7 +59,8 @@ class Rules:
         # a player can only attack for 3 seconds at a time
         opponent.health = opponent.health - (dragon.power * 3)
         if dragon.health < 0:
-                # dead - execute some sort of dead rule/ event
+            pass
+            # dead - execute some sort of dead rule/ event
 
     def food_storage(self, dragon, storage):
         dragon.storage += storage
