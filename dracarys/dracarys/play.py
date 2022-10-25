@@ -77,6 +77,7 @@ class App:
         self._game.step()
 
     def on_render(self):
+        self._display.fill((255, 255, 255))
         image = self.player.render()
         image = image.transpose((1, 0, 2))
         self._display.blit(pygame.surfarray.make_surface(image), (0, 0))

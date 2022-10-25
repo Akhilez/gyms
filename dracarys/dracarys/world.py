@@ -20,6 +20,7 @@ class World:
         """
 
         self.space = Space()
+        self.space.damping = self.params.damping
 
         self.boundaries = [
             pymunk.Segment(self.space.static_body, (50, 50), (50, self.params.height - 50), 5),

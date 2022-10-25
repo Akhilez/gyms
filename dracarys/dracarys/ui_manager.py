@@ -26,7 +26,7 @@ class UIManager:
         self.scene.add_sprite_list("Player")
 
         # Set up the Camera
-        self.camera = arcade.Camera(self.params.width, self.params.height)
+        self.camera = arcade.Camera(self.game.params.world.width, self.game.params.world.width)
 
     def step(self):
         pass
@@ -76,20 +76,13 @@ class UIManager:
         self.game.objects_manager.characters[0].draw()
 
     def get_screenshot(self, x, y, angle):
-        diag = self.params.width
-        # diag = self.params.width  # + self.params.height  # heuristic
-        # x = x - diag // 2
-        # y = y - diag // 2
+        diag = self.params.width  # + self.params.height  # heuristic
+        x = x - diag // 2
+        y = y - diag // 2
         image = arcade.get_image(x, y, diag, diag)
 
-        # image = image.rotate(math.radians(angle))
+        image = image.rotate(-math.degrees(angle))
 
         image = np.asarray(image)  # shape (h, w, 4) (RGBA)
         image = image[:, :, :3]  # shape (h, w, 3)  Got rid of alpha channel
         return image
-
-    def _center_camera_to_player(self, x, y):
-        self.camera.move_to((
-            x - (self.camera.viewport_width / 2),
-            y - (self.camera.viewport_height / 2),
-        ))

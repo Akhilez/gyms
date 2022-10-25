@@ -15,17 +15,17 @@ class RulesParams(BaseModel):
 class WorldParams(BaseModel):
     height: int = 1_000
     width: int = 1_000
-    damping: float = 0.9
+    damping: float = 0.5
 
 
 class CharacterParams(BaseModel):
-    initial_mass: float = 10
+    initial_mass: float = 1
     size: float = 15
 
 
 class DragonParams(CharacterParams):
-    rotation_max_speed: float = math.pi / 8
-    force_max: float = 1000.0
+    rotation_max_speed: float = math.pi / 32
+    force_max: float = 200.0
 
 
 class ObjectsManagerParams(BaseModel):
@@ -37,8 +37,8 @@ class StatsParams(BaseModel):
 
 
 class UIParams(BaseModel):
-    height: int = 1000
-    width: int = 1000
+    height: int = 500
+    width: int = 500
     fps: float = 30
 
 
