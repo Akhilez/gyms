@@ -13,6 +13,7 @@ class Character:
     def __init__(self, game: Game):
         self.game = game
         self.p = game.params.objects_manager.character
+        self._health = 100
 
         self.action_mask = [None, [1, 1]]
         self.has_lost: bool = False
@@ -45,6 +46,12 @@ class Character:
     def render(self) -> np.array:
         """Used to get a view of the world from the character's perspective."""
         return self.game.ui_manager.render_for(self)
+
+    def get_health(self) -> float:
+        return self._health
+
+    def set_health(self, health: float) -> None:
+        self._health = health
 
     def draw(self):
         """Used to draw self onto arcade scene."""
