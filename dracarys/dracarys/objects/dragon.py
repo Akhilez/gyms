@@ -31,10 +31,8 @@ class Dragon(Character):
         # Setup PyMunk body and shape
         self.body = Body()
         self.body.position = (
-            self.game.params.world.width // 2,
-            self.game.params.world.height // 2,
-            # random() * self.game.params.world.width,
-            # random() * self.game.params.world.height
+            random() * self.game.params.world.width,
+            random() * self.game.params.world.height
         )
         self.shape = Circle(self.body, radius=self.p.size // 3)
         self.shape.mass = self.p.initial_mass
@@ -69,9 +67,6 @@ class Dragon(Character):
         # Rotation
         rotation = self.p.rotation_max_speed * r
         self.body.angle -= rotation
-        if self.body.torque != 0:
-            print(self.body.torque)
-        # print(self.body.rotation_vector)
 
     @staticmethod
     def get_angle(a, b, c):

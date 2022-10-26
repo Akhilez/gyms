@@ -1,11 +1,8 @@
 from __future__ import annotations
-
-from dracarys.objects.animals.animal import Animal
-from typing import TYPE_CHECKING
-
+from random import random
+from dracarys.objects.animal import Animal
+from typing import TYPE_CHECKING, List
 # from dracarys.objects.crossbow import CrossBow
-# from dracarys.objects.dragon import Dragon
-
 from dracarys.objects.dragon import Dragon
 if TYPE_CHECKING:
     from dracarys.game import Game
@@ -16,24 +13,22 @@ class ObjectsManager:
         self.game = game
         self.params = game.params.objects_manager
 
+        self.animals = self.generate_animals(self.params.n_animals)
+        for animal in self.animals:
+            animal.health = random()
 
-        # self.dragons = self._generate_characters_dragon()
-        self.animals = [self.generate_characters_animal()]
         # self.crossbow = self._generate_characters_crossbow()
-
         self.dragons = [Dragon(self.game)]
 
     def step(self):
-        for character in self.dragons:
+        for character in (*self.dragons, *self.animals):
             character.step()
-        # Clean up any dead dragons
-        # Spawn any new dragons
 
-    # def _generate_characters_dragon(self) -> List[Dragon]:
-    #     return [Dragon(self.game)]
-    #
-    def generate_characters_animal(self) -> Animal:
-        return Animal(self.game)
-    #
-    # def _generate_characters_crossbow(self) -> List[CrossBow]:
-    #     return [CrossBow(self.game)]
+        # Clean up any dead dragons
+
+        # Spawn any new characters
+        if len(self.animals) < self.params.n_animals:
+            self.generate_animals(self.params.n_animals - len(self.animals))
+
+    def generate_animals(self, n_animals) -> List[Animal]:
+        return [Animal(self.game) for _ in range(n_animals)]

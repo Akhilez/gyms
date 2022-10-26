@@ -64,7 +64,8 @@ class UIManager:
     def draw_objects(self):
         for animal in self.game.objects_manager.animals:
             animal.draw()
-        self.game.objects_manager.dragons[0].draw()
+        for dragon in self.game.objects_manager.dragons:
+            dragon.draw()
 
     def get_screenshot_akhil(self, angle):
         w = self.params.width * 2

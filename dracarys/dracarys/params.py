@@ -1,5 +1,4 @@
 import math
-
 from pydantic import BaseModel
 
 
@@ -32,13 +31,14 @@ class DragonParams(CharacterParams):
 
 class AnimalParams(CharacterParams):
     size: float = 10
-    rotation_max_speed: float = math.pi / 128
-    force_max: float = 100
+    rotation_max_speed: float = math.pi / 32
+    force_max: float = 10
 
 
 class ObjectsManagerParams(BaseModel):
     dragon: DragonParams = DragonParams()
     animal: AnimalParams = AnimalParams()
+    n_animals: int = 20
 
 
 class StatsParams(BaseModel):

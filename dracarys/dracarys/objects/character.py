@@ -11,7 +11,6 @@ class Character(ABC):
         self.game = game
         self.health = 1.0
         self.action_space = None
-        self.is_alive: bool = True
 
         self.body = None
         self.shape = None
