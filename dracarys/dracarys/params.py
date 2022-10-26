@@ -20,7 +20,7 @@ class WorldParams(BaseModel):
 
 class CharacterParams(BaseModel):
     initial_mass: float = 1
-    size: float = 15
+    size: float = 64
 
 
 class DragonParams(CharacterParams):

@@ -4,8 +4,8 @@ from random import random
 from typing import TYPE_CHECKING
 import arcade
 import numpy as np
-from pymunk import Body, Circle
-
+from pymunk import Body, Circle, ShapeFilter
+from dracarys.constants import CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK, CAT_ANIMAL
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.rules import ACTION_SPACE
@@ -19,22 +19,29 @@ class Character:
 
         self.action_mask = [None, [1, 1]]
         self.has_lost: bool = False
+        self._walk_filter = ShapeFilter(categories=CAT_DRAGON_WALK)
+        self._fly_filter = ShapeFilter(
+            categories=CAT_DRAGON_FLY,
+            # When flying, collides with all except rocks & animals
+            mask=ShapeFilter.ALL_MASKS() ^ (CAT_ROCK | CAT_ANIMAL)
+        )
 
         self.body = Body()
         self.body.position = (
             random() * self.game.params.world.width,
             random() * self.game.params.world.height
         )
-        self.shape = Circle(self.body, radius=self.p.size)
+        self.shape = Circle(self.body, radius=self.p.size // 3)
         self.shape.mass = self.p.initial_mass
         self.shape.friction = 0
+        self.shape.filter = self._walk_filter
         self.game.world.space.add(self.body, self.shape)
 
         # Set up the player, specifically placing it at these coordinates.
         image_source = ":resources:images/space_shooter/playerShip3_orange.png"
         self.player_sprite = arcade.Sprite(
             image_source,
-            scale=40 / 128,
+            scale=self.p.size / 128,
             angle=self.body.angle,
             center_x=self.body.position.x,
             center_y=self.body.position.y,
@@ -51,12 +58,6 @@ class Character:
 
     def draw(self):
         """Used to draw self onto arcade scene."""
-        arcade.draw_circle_filled(
-            center_x=self.body.position.x,
-            center_y=self.body.position.y,
-            radius=self.shape.radius,
-            color=arcade.color.RED,
-        )
         self.player_sprite.position = self.body.position
         self.player_sprite.radians = self.body.angle
 
