@@ -45,8 +45,6 @@ class UIManager:
         # Draw all objects
         self.draw_objects()
 
-        self.draw_animals()
-
         cx, cy = character.body.position
 
         # Position the camera
@@ -64,23 +62,23 @@ class UIManager:
         pass
 
     def draw_objects(self):
-        self.game.objects_manager.dragons[0].draw()
-
-    def draw_animals(self):
         for animal in self.game.objects_manager.animals:
             animal.draw()
+        self.game.objects_manager.dragons[0].draw()
 
     def get_screenshot(self, angle):
-        w = self.params.width * 2
-        h = self.params.height * 2
-        image = arcade.get_image(0, 0, w, h)
+        w = self.params.width
+        h = self.params.height
+        image = arcade.get_image(self.params.width // 2, self.params.height // 2, self.params.width, self.params.height)
 
         image = image.rotate(-math.degrees(angle))
-        # image = image.resize((self.params.width, self.params.height))
+        # image3 = image.resize((self.params.width, self.params.height))
 
         image = np.asarray(image)  # shape (h, w, 4) (RGBA)
         image = image[:, :, :3]  # shape (h, w, 3)  Got rid of alpha channel
-        image = image[w // 4: w // 4 * 3, h // 4: h // 4 * 3, :]
+        # image = image[w//2:w*3//2, h//2:h*3//2]
+        image = image[w // 2: w * 3 // 2, h // 2: h * 3 // 2]
+
         return image
 
     def _center_camera_to_player(self, x, y):

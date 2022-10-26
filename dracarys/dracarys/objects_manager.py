@@ -15,11 +15,13 @@ class ObjectsManager:
     def __init__(self, game: Game):
         self.game = game
         self.params = game.params.objects_manager
-        self.dragons = [Dragon(self.game)]
+
 
         # self.dragons = self._generate_characters_dragon()
         self.animals = [self.generate_characters_animal()]
         # self.crossbow = self._generate_characters_crossbow()
+
+        self.dragons = [Dragon(self.game)]
 
     def step(self):
         for character in self.dragons:
