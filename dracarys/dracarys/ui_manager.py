@@ -64,18 +64,34 @@ class UIManager:
     def draw_objects(self):
         self.game.objects_manager.dragons[0].draw()
 
-    def get_screenshot(self, angle):
+    def get_screenshot_akhil(self, angle):
         w = self.params.width * 2
         h = self.params.height * 2
-        image = arcade.get_image(0, 0)# , w, h)
+        image = arcade.get_image(0, 0)
 
-        # image = image.rotate(-math.degrees(angle))
+        image = image.rotate(-math.degrees(angle))
         # image = image.resize((self.params.width, self.params.height))
 
         image = np.asarray(image)  # shape (h, w, 4) (RGBA)
         image = image[:, :, :3]  # shape (h, w, 3)  Got rid of alpha channel
-        # image = image[w // 4: w // 4 * 3, h // 4: h // 4 * 3, :]
+        image = image[w // 4: w // 4 * 3, h // 4: h // 4 * 3, :]
         return image
+
+    def get_screenshot_brian(self, angle):
+        w = self.params.width
+        h = self.params.height
+        image = arcade.get_image(w // 2, h // 2, w, h)
+
+        image = image.rotate(-math.degrees(angle))
+
+        image = np.asarray(image)  # shape (h, w, 4) (RGBA)
+        image = image[:, :, :3]  # shape (h, w, 3)  Got rid of alpha channel
+        image = image[w // 2: w * 3 // 2, h // 2: h * 3 // 2]
+
+        return image
+
+    def get_screenshot(self, angle):
+        return self.get_screenshot_akhil(angle)
 
     def _center_camera_to_player(self, x, y):
         cx = x - (self.camera.viewport_width / 2)

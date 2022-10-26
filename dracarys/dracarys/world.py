@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 from random import random
 from typing import TYPE_CHECKING
 import arcade
 import numpy as np
 import pymunk
-from pymunk import Space, ShapeFilter, PointQueryInfo
+from pymunk import Space, ShapeFilter
 from dracarys.constants import CAT_WALL, CAT_ROCK, CAT_GROUND
 if TYPE_CHECKING:
     from dracarys.game import Game
@@ -123,12 +124,7 @@ class World:
             y *= s
             cell = pymunk.Poly(
                 self.space.static_body,
-                [
-                    (x, y),
-                    (x + s, y),
-                    (x + s, y + s),
-                    (x, y + s)
-                ]
+                [(x, y), (x + s, y), (x + s, y + s), (x, y + s)],
             )
             cell.filter = ShapeFilter(
                 categories=CAT_GROUND,
@@ -180,9 +176,8 @@ class World:
         #     x = int(random() * terrain_w)
         #     y = int(random() * terrain_h)
         #
-        #     point = self.space.point_query((x, y), max_distance=0, shape_filter=ShapeFilter(mask=CAT_ROCK))
+        #     point = self.space.point_query(point=(x, y), max_distance=0, shape_filter=ShapeFilter())
         #     pass
-
 
         return towers
 
