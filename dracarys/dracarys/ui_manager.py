@@ -45,6 +45,8 @@ class UIManager:
         # Draw all objects
         self.draw_objects()
 
+        self.draw_animals()
+
         cx, cy = character.body.position
 
         # Position the camera
@@ -63,6 +65,10 @@ class UIManager:
 
     def draw_objects(self):
         self.game.objects_manager.dragons[0].draw()
+
+    def draw_animals(self):
+        for animal in self.game.objects_manager.animals:
+            animal.draw()
 
     def get_screenshot(self, angle):
         w = self.params.width * 2

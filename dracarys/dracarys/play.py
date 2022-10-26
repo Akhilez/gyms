@@ -1,3 +1,5 @@
+import random
+
 import pygame
 from dracarys.game import Game
 
@@ -76,6 +78,10 @@ class App:
         self._set_actions()
         self._game.step()
 
+    def generate_animal(self):
+        self._game.objects_manager.animals.append(
+            self._game.objects_manager.generate_characters_animal())
+
     def on_render(self):
         self._display.fill((255, 255, 255))
         image = self.player.render()
@@ -83,6 +89,8 @@ class App:
         self._display.blit(pygame.surfarray.make_surface(image), (0, 0))
         pygame.display.flip()
         pygame.display.update()
+        while len(self._game.objects_manager.animals) < 20:
+            self.generate_animal()
 
     def on_cleanup(self):
         pygame.quit()

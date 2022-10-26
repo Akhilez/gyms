@@ -40,7 +40,7 @@ class Dragon(Character):
         self.game.world.space.add(self.body, self.shape)
 
         # Sprite
-        image_source = ":resources:images/space_shooter/playerShip3_orange.png"
+        image_source = "objects/images/dragon-1-without-flame.png"
         self.sprite = arcade.Sprite(
             image_source,
             scale=self.p.size / 128,
