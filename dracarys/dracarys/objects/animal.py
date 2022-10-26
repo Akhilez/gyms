@@ -89,3 +89,5 @@ class Animal(Character):
         # Rotation
         rotation = self.p.rotation_max_speed * r
         self.body.angle -= rotation
+
+        self.health -= self.p.health_decay_rate

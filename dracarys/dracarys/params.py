@@ -33,6 +33,7 @@ class AnimalParams(CharacterParams):
     size: float = 10
     rotation_max_speed: float = math.pi / 32
     force_max: float = 10
+    health_decay_rate: float = 1e-3
 
 
 class ObjectsManagerParams(BaseModel):
