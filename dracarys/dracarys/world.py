@@ -21,8 +21,9 @@ class World:
         self.space.damping = self.params.damping
 
         self.boundaries = self._create_boundaries()
+        self.hills = None
         (
-            self.hills,
+            self.hill_indices,
             self.slopes,
             self.ground,
             self.sand,
@@ -104,34 +105,34 @@ class World:
         hills, slopes, ground, sand, grass, water = self._discretize_terrain(terrain)
 
         # 3. Make static bodies of hills
-        hills = self._make_hills(hills, ':resources:images/tiles/stoneCenter.png')
+        self.hills = self._make_hills(hills, ':resources:images/tiles/stoneCenter.png')
 
         # 4. Make shapes of rest
-        slopes = self._make_grid(slopes, ':resources:images/tiles/planetCenter.png')
-        ground = self._make_grid(ground, ':resources:images/tiles/sandCenter.png')
-        sand = self._make_grid(sand, ':resources:images/topdown_tanks/tileSand2.png', sprite_side=64)
-        grass = self._make_grid(grass, ':resources:images/topdown_tanks/tileGrass2.png', sprite_side=64)
-        water = self._make_grid(water, ':resources:images/tiles/water.png')
-        self.space.add(*slopes, *ground, *grass, *water)
+        self._make_grid(slopes, ':resources:images/tiles/planetCenter.png')
+        self._make_grid(ground, ':resources:images/tiles/sandCenter.png')
+        self._make_grid(sand, ':resources:images/topdown_tanks/tileSand2.png', sprite_side=64)
+        self._make_grid(grass, ':resources:images/topdown_tanks/tileGrass2.png', sprite_side=64)
+        self._make_grid(water, ':resources:images/tiles/water.png')
+        # self.space.add(*slopes, *ground, *grass, *water)
 
         return hills, slopes, ground, grass, sand, water
 
     def _make_grid(self, indices, sprite, sprite_side=128):
         s = self.params.cell_size
-        cells = []
+        # cells = []
         for x, y in zip(*indices):
             x *= s
             y *= s
-            cell = pymunk.Poly(
-                self.space.static_body,
-                [(x, y), (x + s, y), (x + s, y + s), (x, y + s)],
-            )
-            cell.filter = ShapeFilter(
-                categories=CAT_GROUND,
-                # Don't collide with anything. Will this work?
-                mask=0
-            )
-            cells.append(cell)
+            # cell = pymunk.Poly(
+            #     self.space.static_body,
+            #     [(x, y), (x + s, y), (x + s, y + s), (x, y + s)],
+            # )
+            # cell.filter = ShapeFilter(
+            #     categories=CAT_GROUND,
+            #     # Don't collide with anything. Will this work?
+            #     mask=0
+            # )
+            # cells.append(cell)
 
             cell = arcade.Sprite(
                 sprite,
@@ -140,7 +141,7 @@ class World:
                 center_y=y + s // 2,
             )
             self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, cell)
-        return cells
+        # return cells
 
     def _make_hills(self, hill_indices, sprite):
         s = self.params.cell_size
@@ -151,8 +152,10 @@ class World:
             y *= s
             hill = pymunk.Poly(
                 self.space.static_body,
+                # [(0, 0), (s, 0), (s, s), (0, s)]
                 [(x, y), (x + s, y), (x + s, y + s), (x, y + s)],
             )
+            # hill.body.position = (x, y)
             hill.elasticity = 0.9
             hill.friction = 0.0
             hill.filter = pymunk.ShapeFilter(group=CAT_ROCK, categories=CAT_ROCK)
@@ -169,18 +172,38 @@ class World:
         return hills
 
     def _create_towers(self):
+        s = self.params.cell_size * 5
         towers = []
         terrain_w = self.params.width // self.params.cell_size
         terrain_h = self.params.height // self.params.cell_size
-        # while len(towers) < self.params.n_towers:
-        #     x = int(random() * terrain_w)
-        #     y = int(random() * terrain_h)
-        #
-        #     point = self.space.point_query(point=(x, y), max_distance=0, shape_filter=ShapeFilter())
-        #     pass
+        while len(towers) < self.params.n_towers:
+            x = int(random() * terrain_w)
+            y = int(random() * terrain_h)
+            if (x, y) in zip(*self.hill_indices):
+                continue
 
+            x *= self.params.cell_size
+            y *= self.params.cell_size
+            tower = pymunk.Poly(
+                self.space.static_body,
+                # [(0, 0), (s, 0), (s, s), (0, s)]
+                [(x, y), (x + s, y), (x + s, y + s), (x, y + s)],
+            )
+            # hill.body.position = (x, y)
+            tower.elasticity = 0.9
+            tower.friction = 0.0
+            tower.filter = pymunk.ShapeFilter(group=CAT_ROCK, categories=CAT_ROCK)
+            towers.append(tower)
+
+            cell = arcade.Sprite(
+                ':resources:images/tiles/lava.png',
+                scale=s / 128,
+                center_x=x + s // 2,
+                center_y=y + s // 2,
+            )
+            self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, cell)
+        self.space.add(*towers)
         return towers
-
 
     @staticmethod
     def _discretize_terrain(t):
