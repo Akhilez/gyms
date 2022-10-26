@@ -9,6 +9,7 @@ from pymunk import ShapeFilter, Body, Circle
 from dracarys.constants import CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK, CAT_ANIMAL
 from dracarys.objects.character import Character
 from dracarys.rules import ACTION_SPACE
+from dracarys.constants import SPRITE_LIST_DYNAMIC
 
 
 class Dragon(Character):
@@ -48,7 +49,7 @@ class Dragon(Character):
             center_x=self.body.position.x,
             center_y=self.body.position.y,
         )
-        self.game.ui_manager.scene.add_sprite("Player", self.sprite)
+        self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.sprite)
 
     def draw(self):
         """Used to draw self onto arcade scene."""

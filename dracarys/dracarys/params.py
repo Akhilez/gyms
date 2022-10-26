@@ -16,6 +16,8 @@ class WorldParams(BaseModel):
     height: int = 1024  # Multiple of 32
     width: int = 1024  # Multiple of 32
     damping: float = 0.5
+    n_towers: int = 3
+    cell_size: int = 8
 
 
 class CharacterParams(BaseModel):
@@ -37,8 +39,8 @@ class StatsParams(BaseModel):
 
 
 class UIParams(BaseModel):
-    height: int = 500
-    width: int = 500
+    height: int = 1024
+    width: int = 1024
     fps: float = 30
 
 

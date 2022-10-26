@@ -1,14 +1,14 @@
 from __future__ import annotations
+from random import random
 from typing import TYPE_CHECKING
 import arcade
 import numpy as np
 import pymunk
-from pymunk import Space
-
-from dracarys.constants import CAT_WALL, CAT_ROCK
-
+from pymunk import Space, ShapeFilter, PointQueryInfo
+from dracarys.constants import CAT_WALL, CAT_ROCK, CAT_GROUND
 if TYPE_CHECKING:
     from dracarys.game import Game
+from dracarys.constants import SPRITE_LIST_STATIC
 
 
 class World:
@@ -28,6 +28,8 @@ class World:
             self.grass,
             self.water,
         ) = self._create_terrain()
+
+        self.towers = self._create_towers()
 
     def step(self):
         self.space.step(dt=1.0 / self.game.params.ui.fps)
@@ -58,7 +60,7 @@ class World:
                     center_y=-side // 2 - layer,
                     angle=0,
                 )
-                self.game.ui_manager.scene.add_sprite("Walls", wall)
+                self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, wall)
 
                 # Create top wall
                 wall = arcade.Sprite(
@@ -67,7 +69,7 @@ class World:
                     center_y=self.params.height + side // 2 + layer,
                     angle=0,
                 )
-                self.game.ui_manager.scene.add_sprite("Walls", wall)
+                self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, wall)
 
             for x in range(-side * 5, self.params.height + (5 * side), side):
                 # Create left wall
@@ -77,7 +79,7 @@ class World:
                     center_y=x,
                     angle=0,
                 )
-                self.game.ui_manager.scene.add_sprite("Walls", wall)
+                self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, wall)
 
                 # Create right wall
                 wall = arcade.Sprite(
@@ -86,60 +88,74 @@ class World:
                     center_y=x,
                     angle=0,
                 )
-                self.game.ui_manager.scene.add_sprite("Walls", wall)
+                self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, wall)
 
         return boundaries
 
     def _create_terrain(self):
         # 1. Get perlin noise
-        cell_s = 8
         perlin_resolution = 4
-        terrain_w = self.params.width // cell_s
-        terrain_h = self.params.height // cell_s
+        terrain_w = self.params.width // self.params.cell_size
+        terrain_h = self.params.height // self.params.cell_size
         terrain = generate_perlin_noise_2d((terrain_w, terrain_h), [perlin_resolution] * 2)
 
         # 2. Divide it into hill, slope, ground, grass and water
         hills, slopes, ground, sand, grass, water = self._discretize_terrain(terrain)
 
         # 3. Make static bodies of hills
-        hills = self._make_hills(hills, cell_s, ':resources:images/tiles/stoneCenter.png')
+        hills = self._make_hills(hills, ':resources:images/tiles/stoneCenter.png')
 
         # 4. Make shapes of rest
-        self._make_grid(slopes, cell_s, ':resources:images/tiles/planetCenter.png')
-        self._make_grid(ground, cell_s, ':resources:images/tiles/sandCenter.png')
-        self._make_grid(sand, cell_s, ':resources:images/topdown_tanks/tileSand2.png', sprite_side=64)
-        self._make_grid(grass, cell_s, ':resources:images/topdown_tanks/tileGrass2.png', sprite_side=64)
-        self._make_grid(water, cell_s, ':resources:images/tiles/water.png')
-        # self.space.add(*slopes, *ground, *grass, *water)
+        slopes = self._make_grid(slopes, ':resources:images/tiles/planetCenter.png')
+        ground = self._make_grid(ground, ':resources:images/tiles/sandCenter.png')
+        sand = self._make_grid(sand, ':resources:images/topdown_tanks/tileSand2.png', sprite_side=64)
+        grass = self._make_grid(grass, ':resources:images/topdown_tanks/tileGrass2.png', sprite_side=64)
+        water = self._make_grid(water, ':resources:images/tiles/water.png')
+        self.space.add(*slopes, *ground, *grass, *water)
 
         return hills, slopes, ground, grass, sand, water
 
-    def _make_grid(self, indices, cell_s, sprite, sprite_side=128):
-        # cells = []
+    def _make_grid(self, indices, sprite, sprite_side=128):
+        s = self.params.cell_size
+        cells = []
         for x, y in zip(*indices):
-            x *= cell_s
-            y *= cell_s
-            # cell = pymunk.Poly(None, [(x, y), (x + cell_s, y), (x + cell_s, y + cell_s), (x, y + cell_s)])
-            # cells.append(cell)
+            x *= s
+            y *= s
+            cell = pymunk.Poly(
+                self.space.static_body,
+                [
+                    (x, y),
+                    (x + s, y),
+                    (x + s, y + s),
+                    (x, y + s)
+                ]
+            )
+            cell.filter = ShapeFilter(
+                categories=CAT_GROUND,
+                # Don't collide with anything. Will this work?
+                mask=0
+            )
+            cells.append(cell)
 
             cell = arcade.Sprite(
                 sprite,
-                scale=cell_s / sprite_side,
-                center_x=x + cell_s // 2,
-                center_y=y + cell_s // 2,
+                scale=s / sprite_side,
+                center_x=x + s // 2,
+                center_y=y + s // 2,
             )
-            self.game.ui_manager.scene.add_sprite("Terrain", cell)
-        # return cells
+            self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, cell)
+        return cells
 
-    def _make_hills(self, hill_indices, cell_s, sprite):
+    def _make_hills(self, hill_indices, sprite):
+        s = self.params.cell_size
         sprite_side = 128
         hills = []
         for x, y in zip(*hill_indices):
-            x *= cell_s
-            y *= cell_s
+            x *= s
+            y *= s
             hill = pymunk.Poly(
                 self.space.static_body,
-                [(x, y), (x + cell_s, y), (x + cell_s, y + cell_s), (x, y + cell_s)],
+                [(x, y), (x + s, y), (x + s, y + s), (x, y + s)],
             )
             hill.elasticity = 0.9
             hill.friction = 0.0
@@ -148,13 +164,28 @@ class World:
 
             cell = arcade.Sprite(
                 sprite,
-                scale=cell_s / sprite_side,
-                center_x=x + cell_s // 2,
-                center_y=y + cell_s // 2,
+                scale=s / sprite_side,
+                center_x=x + s // 2,
+                center_y=y + s // 2,
             )
-            self.game.ui_manager.scene.add_sprite("Terrain", cell)
+            self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, cell)
         self.space.add(*hills)
         return hills
+
+    def _create_towers(self):
+        towers = []
+        terrain_w = self.params.width // self.params.cell_size
+        terrain_h = self.params.height // self.params.cell_size
+        # while len(towers) < self.params.n_towers:
+        #     x = int(random() * terrain_w)
+        #     y = int(random() * terrain_h)
+        #
+        #     point = self.space.point_query((x, y), max_distance=0, shape_filter=ShapeFilter(mask=CAT_ROCK))
+        #     pass
+
+
+        return towers
+
 
     @staticmethod
     def _discretize_terrain(t):

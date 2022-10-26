@@ -6,6 +6,7 @@ if TYPE_CHECKING:
 import numpy as np
 from dracarys.objects.character import Character
 import arcade
+from dracarys.constants import SPRITE_LIST_STATIC, SPRITE_LIST_DYNAMIC
 
 
 class UIManager:
@@ -22,9 +23,8 @@ class UIManager:
         self.scene = arcade.Scene()
 
         # Create the Sprite lists
-        self.scene.add_sprite_list("Walls", use_spatial_hash=True)
-        self.scene.add_sprite_list("Terrain", use_spatial_hash=True)
-        self.scene.add_sprite_list("Player")
+        self.scene.add_sprite_list(SPRITE_LIST_STATIC, use_spatial_hash=True)
+        self.scene.add_sprite_list(SPRITE_LIST_DYNAMIC)
 
         # Set up the Camera
         self.camera = arcade.Camera(self.game.params.world.width, self.game.params.world.width)
@@ -67,17 +67,20 @@ class UIManager:
     def get_screenshot(self, angle):
         w = self.params.width * 2
         h = self.params.height * 2
-        image = arcade.get_image(0, 0, w, h)
+        image = arcade.get_image(0, 0)# , w, h)
 
-        image = image.rotate(-math.degrees(angle))
+        # image = image.rotate(-math.degrees(angle))
         # image = image.resize((self.params.width, self.params.height))
 
         image = np.asarray(image)  # shape (h, w, 4) (RGBA)
         image = image[:, :, :3]  # shape (h, w, 3)  Got rid of alpha channel
-        image = image[w // 4: w // 4 * 3, h // 4: h // 4 * 3, :]
+        # image = image[w // 4: w // 4 * 3, h // 4: h // 4 * 3, :]
         return image
 
     def _center_camera_to_player(self, x, y):
         cx = x - (self.camera.viewport_width / 2)
         cy = y - (self.camera.viewport_height / 2)
         self.camera.move_to((cx, cy))
+
+    def get_objects_at(self, x, y):
+        pass
