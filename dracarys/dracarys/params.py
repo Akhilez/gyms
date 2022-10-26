@@ -13,8 +13,8 @@ class RulesParams(BaseModel):
 
 
 class WorldParams(BaseModel):
-    height: int = 1_000
-    width: int = 1_000
+    height: int = 1024  # Multiple of 32
+    width: int = 1024  # Multiple of 32
     damping: float = 0.5
 
 

@@ -91,7 +91,7 @@ class World:
 
     def _create_terrain(self):
         # 1. Get perlin noise
-        cell_s = 64
+        cell_s = 8
         perlin_resolution = 7
         terrain_w = self.params.width // cell_s
         terrain_h = self.params.height // cell_s
@@ -104,8 +104,8 @@ class World:
         hills = self._make_hills(hills, cell_s, ':resources:images/tiles/stoneCenter.png')
 
         # 4. Make shapes of rest
-        self._make_grid(slopes, cell_s, ':resources:images/tiles/sandCenter.png')
-        self._make_grid(ground, cell_s, ':resources:images/tiles/planetCenter.png')
+        self._make_grid(slopes, cell_s, ':resources:images/tiles/planetCenter.png')
+        self._make_grid(ground, cell_s, ':resources:images/tiles/sandCenter.png')
         self._make_grid(grass, cell_s, ':resources:images/tiles/grassMid.png')
         self._make_grid(water, cell_s, ':resources:images/tiles/snowLeft.png')
         # self.space.add(*slopes, *ground, *grass, *water)
@@ -124,12 +124,8 @@ class World:
             cell = arcade.Sprite(
                 sprite,
                 scale=cell_s / sprite_side,
-                center_x=x,
-                center_y=y,
-                image_x=0,
-                image_y=0,
-                image_width=cell_s,
-                image_height=cell_s,
+                center_x=x + cell_s // 2,
+                center_y=y + cell_s // 2,
             )
             self.game.ui_manager.scene.add_sprite("Terrain", cell)
         # return cells
@@ -152,14 +148,11 @@ class World:
             cell = arcade.Sprite(
                 sprite,
                 scale=cell_s / sprite_side,
-                center_x=x,
-                center_y=y,
-                image_x=0,
-                image_y=0,
-                image_width=cell_s,
-                image_height=cell_s,
+                center_x=x + cell_s // 2,
+                center_y=y + cell_s // 2,
             )
             self.game.ui_manager.scene.add_sprite("Terrain", cell)
+        self.space.add(*hills)
         return hills
 
     @staticmethod
