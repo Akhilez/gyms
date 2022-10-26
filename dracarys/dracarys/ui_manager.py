@@ -62,6 +62,8 @@ class UIManager:
         pass
 
     def draw_objects(self):
+        for animal in self.game.objects_manager.animals:
+            animal.draw()
         self.game.objects_manager.dragons[0].draw()
 
     def get_screenshot_akhil(self, angle):
@@ -97,6 +99,3 @@ class UIManager:
         cx = x - (self.camera.viewport_width / 2)
         cy = y - (self.camera.viewport_height / 2)
         self.camera.move_to((cx, cy))
-
-    def get_objects_at(self, x, y):
-        pass

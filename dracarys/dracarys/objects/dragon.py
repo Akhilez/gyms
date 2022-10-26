@@ -31,8 +31,10 @@ class Dragon(Character):
         # Setup PyMunk body and shape
         self.body = Body()
         self.body.position = (
-            random() * self.game.params.world.width,
-            random() * self.game.params.world.height
+            self.game.params.world.width // 2,
+            self.game.params.world.height // 2,
+            # random() * self.game.params.world.width,
+            # random() * self.game.params.world.height
         )
         self.shape = Circle(self.body, radius=self.p.size // 3)
         self.shape.mass = self.p.initial_mass
@@ -41,7 +43,7 @@ class Dragon(Character):
         self.game.world.space.add(self.body, self.shape)
 
         # Sprite
-        image_source = ":resources:images/space_shooter/playerShip3_orange.png"
+        image_source = "objects/images/dragon-1-without-flame.png"
         self.sprite = arcade.Sprite(
             image_source,
             scale=self.p.size / 128,

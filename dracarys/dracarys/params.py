@@ -30,8 +30,15 @@ class DragonParams(CharacterParams):
     force_max: float = 500.0
 
 
+class AnimalParams(CharacterParams):
+    size: float = 10
+    rotation_max_speed: float = math.pi / 128
+    force_max: float = 100
+
+
 class ObjectsManagerParams(BaseModel):
     dragon: DragonParams = DragonParams()
+    animal: AnimalParams = AnimalParams()
 
 
 class StatsParams(BaseModel):
@@ -69,4 +76,3 @@ def test_params():
 
 if __name__ == '__main__':
     test_params()
-
