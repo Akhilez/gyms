@@ -23,6 +23,7 @@ class UIManager:
 
         # Create the Sprite lists
         self.scene.add_sprite_list("Walls", use_spatial_hash=True)
+        self.scene.add_sprite_list("Terrain", use_spatial_hash=True)
         self.scene.add_sprite_list("Player")
 
         # Set up the Camera

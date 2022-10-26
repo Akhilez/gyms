@@ -4,7 +4,9 @@ import arcade
 import numpy as np
 import pymunk
 from pymunk import Space
-from dracarys.constants import CAT_WALL
+
+from dracarys.constants import CAT_WALL, CAT_ROCK
+
 if TYPE_CHECKING:
     from dracarys.game import Game
 
@@ -18,6 +20,13 @@ class World:
         self.space.damping = self.params.damping
 
         self.boundaries = self._create_boundaries()
+        (
+            self.hills,
+            self.slopes,
+            self.ground,
+            self.grass,
+            self.water,
+        ) = self._create_terrain()
 
     def step(self):
         self.space.step(dt=1.0 / self.game.params.ui.fps)
@@ -40,7 +49,7 @@ class World:
         side = 128
         sprite = ":resources:images/tiles/dirtCenter.png"
         for layer in range(0, side * 5, side):
-            for x in range(-side * 5, self.params.width + (5*side), side):
+            for x in range(-side * 5, self.params.width + (5 * side), side):
                 # Create bottom wall
                 wall = arcade.Sprite(
                     sprite, 1,
@@ -59,11 +68,11 @@ class World:
                 )
                 self.game.ui_manager.scene.add_sprite("Walls", wall)
 
-            for x in range(-side * 5, self.params.height + (5*side), side):
+            for x in range(-side * 5, self.params.height + (5 * side), side):
                 # Create left wall
                 wall = arcade.Sprite(
                     sprite, 1,
-                    center_x=-side//2 - layer,
+                    center_x=-side // 2 - layer,
                     center_y=x,
                     angle=0,
                 )
@@ -77,22 +86,113 @@ class World:
                     angle=0,
                 )
                 self.game.ui_manager.scene.add_sprite("Walls", wall)
-        
+
         return boundaries
+
+    def _create_terrain(self):
+        # 1. Get perlin noise
+        cell_s = 64
+        perlin_resolution = 7
+        terrain_w = self.params.width // cell_s
+        terrain_h = self.params.height // cell_s
+        terrain = generate_perlin_noise_2d((terrain_w, terrain_h), [perlin_resolution] * 2)
+
+        # 2. Divide it into hill, slope, ground, grass and water
+        hills, slopes, ground, grass, water = self._discretize_terrain(terrain)
+
+        # 3. Make static bodies of hills
+        hills = self._make_hills(hills, cell_s, ':resources:images/tiles/stoneCenter.png')
+
+        # 4. Make shapes of rest
+        self._make_grid(slopes, cell_s, ':resources:images/tiles/sandCenter.png')
+        self._make_grid(ground, cell_s, ':resources:images/tiles/planetCenter.png')
+        self._make_grid(grass, cell_s, ':resources:images/tiles/grassMid.png')
+        self._make_grid(water, cell_s, ':resources:images/tiles/snowLeft.png')
+        # self.space.add(*slopes, *ground, *grass, *water)
+
+        return hills, slopes, ground, grass, water
+
+    def _make_grid(self, indices, cell_s, sprite):
+        sprite_side = 128
+        # cells = []
+        for x, y in zip(*indices):
+            x *= cell_s
+            y *= cell_s
+            # cell = pymunk.Poly(None, [(x, y), (x + cell_s, y), (x + cell_s, y + cell_s), (x, y + cell_s)])
+            # cells.append(cell)
+
+            cell = arcade.Sprite(
+                sprite,
+                scale=cell_s / sprite_side,
+                center_x=x,
+                center_y=y,
+                image_x=0,
+                image_y=0,
+                image_width=cell_s,
+                image_height=cell_s,
+            )
+            self.game.ui_manager.scene.add_sprite("Terrain", cell)
+        # return cells
+
+    def _make_hills(self, hill_indices, cell_s, sprite):
+        sprite_side = 128
+        hills = []
+        for x, y in zip(*hill_indices):
+            x *= cell_s
+            y *= cell_s
+            hill = pymunk.Poly(
+                self.space.static_body,
+                [(x, y), (x + cell_s, y), (x + cell_s, y + cell_s), (x, y + cell_s)],
+            )
+            hill.elasticity = 0.9
+            hill.friction = 0.0
+            hill.filter = pymunk.ShapeFilter(group=CAT_ROCK, categories=CAT_ROCK)
+            hills.append(hill)
+
+            cell = arcade.Sprite(
+                sprite,
+                scale=cell_s / sprite_side,
+                center_x=x,
+                center_y=y,
+                image_x=0,
+                image_y=0,
+                image_width=cell_s,
+                image_height=cell_s,
+            )
+            self.game.ui_manager.scene.add_sprite("Terrain", cell)
+        return hills
+
+    @staticmethod
+    def _discretize_terrain(t):
+        t_hill = 0.5
+        t_slope = 0.3
+        t_ground = -0.3
+        t_grass = -0.5
+
+        hills = np.where(t >= t_hill)
+        slopes = np.where((t >= t_slope) & (t < t_hill))
+        ground = np.where((t >= t_ground) & (t < t_slope))
+        grass = np.where((t >= t_grass) & (t < t_ground))
+        water = np.where((t < t_grass))
+
+        return hills, slopes, ground, grass, water
 
 
 def generate_perlin_noise_2d(shape, res):
+    # Make sure that the shape and resolution are compatible.
     old_shape = list(shape)
     new_shape = []
     for i in range(len(shape)):
         new_shape.append(((shape[i] // res[i]) + 1) * res[i])
     shape = new_shape
+
+    # Perlin Noise
     def f(t):
-        return 6 * t**5 - 15 * t**4 + 10 * t**3
+        return 6 * t ** 5 - 15 * t ** 4 + 10 * t ** 3
 
     delta = (res[0] / shape[0], res[1] / shape[1])
     d = (shape[0] // res[0], shape[1] // res[1])
-    grid = np.mgrid[0 : res[0] : delta[0], 0 : res[1] : delta[1]].transpose(1, 2, 0) % 1
+    grid = np.mgrid[0: res[0]: delta[0], 0: res[1]: delta[1]].transpose(1, 2, 0) % 1
     # Gradients
     angles = 2 * np.pi * np.random.rand(res[0] + 1, res[1] + 1)
     gradients = np.dstack((np.cos(angles), np.sin(angles)))
@@ -111,4 +211,6 @@ def generate_perlin_noise_2d(shape, res):
     n1 = n01 * (1 - t[:, :, 0]) + t[:, :, 0] * n11
     noise = np.sqrt(2) * ((1 - t[:, :, 1]) * n0 + t[:, :, 1] * n1)
 
-    return noise[:old_shape[0], :old_shape[1]]
+    # Crop to the required shape.
+    noise = noise[:old_shape[0], :old_shape[1]]
+    return noise
