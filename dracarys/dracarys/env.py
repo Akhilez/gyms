@@ -30,7 +30,7 @@ class SrYvl2(Env):
 
     def __init__(self):
         self.game = Game(params=P)
-        self.player = self.game.objects_manager.characters[0]
+        self.player = self.game.objects_manager.dragons[0]
 
     def reset(self, *_args, **_kwargs):
         self.__init__()

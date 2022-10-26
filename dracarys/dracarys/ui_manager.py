@@ -62,7 +62,7 @@ class UIManager:
         pass
 
     def draw_objects(self):
-        self.game.objects_manager.characters[0].draw()
+        self.game.objects_manager.dragons[0].draw()
 
     def get_screenshot(self, angle):
         w = self.params.width * 2

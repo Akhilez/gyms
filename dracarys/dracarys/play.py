@@ -10,7 +10,7 @@ class App:
         pygame.init()
         self._game = Game(params='human_single_player')
         self.p = self._game.params
-        self.player = self._game.objects_manager.characters[0]
+        self.player = self._game.objects_manager.dragons[0]
         self._display = pygame.display.set_mode(
             (self.p.ui.width, self.p.ui.height),
             pygame.HWSURFACE | pygame.DOUBLEBUF
@@ -70,7 +70,7 @@ class App:
                 self.fire_pressed = False
 
     def on_loop(self):
-        if self.player.has_lost:
+        if not self.player.is_alive:
             self._running = False
 
         self._set_actions()
