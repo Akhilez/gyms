@@ -24,6 +24,7 @@ class World:
             self.hills,
             self.slopes,
             self.ground,
+            self.sand,
             self.grass,
             self.water,
         ) = self._create_terrain()
@@ -92,13 +93,13 @@ class World:
     def _create_terrain(self):
         # 1. Get perlin noise
         cell_s = 8
-        perlin_resolution = 7
+        perlin_resolution = 4
         terrain_w = self.params.width // cell_s
         terrain_h = self.params.height // cell_s
         terrain = generate_perlin_noise_2d((terrain_w, terrain_h), [perlin_resolution] * 2)
 
         # 2. Divide it into hill, slope, ground, grass and water
-        hills, slopes, ground, grass, water = self._discretize_terrain(terrain)
+        hills, slopes, ground, sand, grass, water = self._discretize_terrain(terrain)
 
         # 3. Make static bodies of hills
         hills = self._make_hills(hills, cell_s, ':resources:images/tiles/stoneCenter.png')
@@ -106,14 +107,14 @@ class World:
         # 4. Make shapes of rest
         self._make_grid(slopes, cell_s, ':resources:images/tiles/planetCenter.png')
         self._make_grid(ground, cell_s, ':resources:images/tiles/sandCenter.png')
-        self._make_grid(grass, cell_s, ':resources:images/tiles/grassMid.png')
-        self._make_grid(water, cell_s, ':resources:images/tiles/snowLeft.png')
+        self._make_grid(sand, cell_s, ':resources:images/topdown_tanks/tileSand2.png', sprite_side=64)
+        self._make_grid(grass, cell_s, ':resources:images/topdown_tanks/tileGrass2.png', sprite_side=64)
+        self._make_grid(water, cell_s, ':resources:images/tiles/water.png')
         # self.space.add(*slopes, *ground, *grass, *water)
 
-        return hills, slopes, ground, grass, water
+        return hills, slopes, ground, grass, sand, water
 
-    def _make_grid(self, indices, cell_s, sprite):
-        sprite_side = 128
+    def _make_grid(self, indices, cell_s, sprite, sprite_side=128):
         # cells = []
         for x, y in zip(*indices):
             x *= cell_s
@@ -160,15 +161,17 @@ class World:
         t_hill = 0.5
         t_slope = 0.3
         t_ground = -0.3
-        t_grass = -0.5
+        t_sand = -0.5
+        t_grass = -0.6
 
         hills = np.where(t >= t_hill)
         slopes = np.where((t >= t_slope) & (t < t_hill))
         ground = np.where((t >= t_ground) & (t < t_slope))
-        grass = np.where((t >= t_grass) & (t < t_ground))
+        sand = np.where((t >= t_sand) & (t < t_ground))
+        grass = np.where((t >= t_grass) & (t < t_sand))
         water = np.where((t < t_grass))
 
-        return hills, slopes, ground, grass, water
+        return hills, slopes, ground, sand, grass, water
 
 
 def generate_perlin_noise_2d(shape, res):
