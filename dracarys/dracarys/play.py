@@ -31,6 +31,7 @@ class App:
         self.turn_left = False
         self.turn_right = False
         self.fire_pressed = False
+        self.act_pressed = False
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
@@ -52,6 +53,8 @@ class App:
                 self.turn_right = True
             elif event.key == pygame.K_SPACE:
                 self.fire_pressed = True
+            elif event.key == pygame.K_f:
+                self.act_pressed = True
 
         # User let up on a key
         elif event.type == pygame.KEYUP:
@@ -69,6 +72,8 @@ class App:
                 self.turn_right = False
             elif event.key == pygame.K_SPACE:
                 self.fire_pressed = False
+            elif event.key == pygame.K_f:
+                self.act_pressed = False
 
     def on_loop(self):
         if self.player.health < 0:
@@ -113,6 +118,8 @@ class App:
             r += ROTATION
         if self.fire_pressed:
             a = DiscreteActions.FIRE
+        if self.act_pressed:
+            a = DiscreteActions.ACT
 
         self.actions = (x, y, r), a
 

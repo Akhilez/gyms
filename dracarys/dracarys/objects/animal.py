@@ -80,7 +80,7 @@ class Animal(Character):
         self.sprite.position = self.body.position
         self.sprite.radians = self.body.angle
 
-        if self.burnt > 1 and not self._flipped:
+        if self.burnt >= 1 and not self._flipped:
             self._flipped = True
             self.sprite.texture = arcade.load_texture(file_name=ANIMAL_DOWN_SPRITES[self.type])
 

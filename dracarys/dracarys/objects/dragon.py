@@ -6,8 +6,9 @@ if TYPE_CHECKING:
 from random import random
 import arcade
 from pymunk import ShapeFilter, Body, Circle
-from dracarys.constants import CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK, CAT_ANIMAL, DRAGON_ACTION_SPACE, \
-    DiscreteActions
+from dracarys.constants import (
+    CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK, CAT_ANIMAL, DRAGON_ACTION_SPACE, DiscreteActions
+)
 from dracarys.objects.character import Character
 from dracarys.constants import SPRITE_LIST_DYNAMIC
 
@@ -18,7 +19,6 @@ class Dragon(Character):
         self.p = game.params.objects_manager.dragon
         self.action_space = DRAGON_ACTION_SPACE
         self.fire_size = 0.0  # (0-1)
-        # self.drag_level = 0
 
         # Collision Filters
         self._walk_filter = ShapeFilter(categories=CAT_DRAGON_WALK)
@@ -101,10 +101,25 @@ class Dragon(Character):
                 if distance < self.fire_size * self.p.max_fire_size:
                     animal.burn()
 
+        if a == DiscreteActions.ACT:
+            # 1. If near a burnt animal, eats it.
+            self._fire_position = self._get_firing_position()
+            for animal in self.game.objects_manager.animals:
+                if animal.burnt >= 1:
+                    distance = self.get_distance(self._fire_position, animal.body.position)
+                    if distance < self.p.eating_distance:
+                        self.eat(animal)
+
+            # 2. If near the key, holds it.
+            # 3. If near a gate and has key, unlocks it.
 
     def _get_firing_position(self):
         # TODO: Get the firing position
         return self.body.position
+
+    def eat(self, animal):
+        self.health += self.p.health_regen_amount
+        animal.health = 0
 
     @staticmethod
     def get_angle(a, b, c):
