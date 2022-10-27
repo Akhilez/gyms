@@ -31,7 +31,7 @@ class Dragon(Character):
         # Setup PyMunk body and shape
         self.body = Body()
         self.body.position = self._get_random_ground_position()
-        self.shape = Circle(self.body, radius=self.p.size // 3)
+        self.shape = Circle(self.body, radius=self.p.size // 2)
         self.shape.mass = self.p.initial_mass
         self.shape.friction = 0
         self.shape.filter = self._walk_filter
@@ -39,7 +39,7 @@ class Dragon(Character):
         self.game.world.space.add(self.body, self.shape)
 
         # Sprite
-        image_source = "objects/images/dragon-1-without-flame.png"
+        image_source = "objects/images/dragon-1.png"
         self.sprite = arcade.Sprite(
             image_source,
             scale=self.p.size / 128,
@@ -51,7 +51,7 @@ class Dragon(Character):
 
         # Fire Sprite
         self._fire_position = self.body.position
-        image_source = ":resources:images/tiles/torch1.png"
+        image_source = "objects/images/Fire.png"
         self.fire_sprite = arcade.Sprite(
             image_source,
             scale=self.fire_size,
