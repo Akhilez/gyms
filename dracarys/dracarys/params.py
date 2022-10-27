@@ -38,7 +38,7 @@ class ArrowParams(CharacterParams):
 class DragonParams(CharacterParams):
     rotation_max_speed: float = math.pi / 32
     force_max: float = 500.0
-    max_fire_size: float = 32
+    max_fire_radius: float = 16
     fire_growth_rate: float = 0.1
     eating_distance: float = 64
     health_regen_amount: float = 0.1

@@ -89,7 +89,7 @@ class Dragon(Character):
 
         self.health_bar.angle = self.body.angle
         # Adjust Fire
-        self.fire_sprite.position = self.body.position
+        self.fire_sprite.position = self._fire_position
         self.fire_sprite.radians = self.body.angle
         self.fire_sprite.scale = self.fire_size
 
@@ -114,16 +114,17 @@ class Dragon(Character):
             self._fire_position = self._get_firing_position()
             for animal in self.game.objects_manager.animals:
                 distance = get_distance(self._fire_position, animal.body.position)
-                if distance < self.fire_size * self.p.max_fire_size:
+                if distance < self.fire_size * self.p.max_fire_radius * 2:
                     animal.burn()
             for crossbow in self.game.objects_manager.crossbows:
                 distance = get_distance(self._fire_position, crossbow.center)
-                if distance < self.fire_size * self.p.max_fire_size * 2:
+                if distance < self.fire_size * self.p.max_fire_radius * 2:
                     crossbow.burn()
 
         if a == DiscreteActions.ACT:
-            # 1. If near a burnt animal, eats it.
             self._fire_position = self._get_firing_position()
+
+            # 1. If near a burnt animal, eats it.
             for animal in self.game.objects_manager.animals:
                 if animal.burnt >= 1:
                     distance = get_distance(self._fire_position, animal.body.position)
@@ -150,8 +151,7 @@ class Dragon(Character):
             self.game.episode_manager.ended = True
 
     def _get_firing_position(self):
-        # TODO: Get the firing position
-        return self.body.position
+        return self.body.local_to_world((0, 80 + self.fire_size * self.p.max_fire_radius * 3))
 
     def eat(self, animal):
         self.health += self.p.health_regen_amount
