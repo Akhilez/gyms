@@ -40,3 +40,6 @@ class Key:
         """Used to draw self onto arcade scene."""
         self.sprite.position = self.body.position
         self.sprite.radians = self.body.angle
+
+    def step(self):
+        pass

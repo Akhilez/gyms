@@ -69,6 +69,8 @@ class UIManager:
             crossbow.draw()
         for arrow in self.game.objects_manager.arrows:
             arrow.draw()
+        for key in self.game.objects_manager.keys:
+            key.draw()
 
     def get_screenshot_akhil(self, angle):
         w = self.params.width * 2
