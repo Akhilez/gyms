@@ -7,6 +7,8 @@ from arcade import Sprite
 from arcade.examples.sprite_health import IndicatorBar
 from pymunk import Body, Circle, ShapeFilter
 from dracarys.constants import CAT_ANIMAL, SPRITE_LIST_DYNAMIC, DRAGON_ACTION_SPACE
+from dracarys.objects.health_bar import HealthBar
+
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.objects.character import Character
@@ -72,13 +74,14 @@ class Animal(Character):
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.sprite)
 
-        self.health_bar: IndicatorBar = IndicatorBar(
+        self.health_bar: HealthBar = HealthBar(
             self,
-            self.game.ui_manager.scene.get_sprite_list(SPRITE_LIST_DYNAMIC),
             (self.body.position.x, self.body.position.y),
             width=self.p.size,
             height=self.p.size//6
         )
+        self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.health_bar.background_box)
+        self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.health_bar.full_box)
 
     def remove_health_bar(self):
         self.health_bar.sprite_list.remove()
