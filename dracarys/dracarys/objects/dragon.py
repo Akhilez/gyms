@@ -5,9 +5,10 @@ if TYPE_CHECKING:
     from dracarys.game import Game
 from random import random
 import arcade
-from pymunk import ShapeFilter, Body, Circle
+from pymunk import ShapeFilter, Body, Circle, Shape
 from dracarys.constants import (
-    CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK, CAT_ANIMAL, DRAGON_ACTION_SPACE, DiscreteActions, CAT_TOWER
+    CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK, CAT_ANIMAL, DRAGON_ACTION_SPACE, DiscreteActions, CAT_TOWER, CAT_ARROW,
+    CAT_WALL
 )
 from dracarys.objects.character import Character
 from dracarys.constants import SPRITE_LIST_DYNAMIC
@@ -18,6 +19,8 @@ class Dragon(Character):
         super(Dragon, self).__init__(game)
         self.p = game.params.objects_manager.dragon
         self.action_space = DRAGON_ACTION_SPACE
+        self._acquired_key = False
+        self._unlocked_gate = False
         self.fire_size = 0.0  # (0-1)
 
         # Collision Filters
@@ -38,6 +41,7 @@ class Dragon(Character):
         self.shape.mass = self.p.initial_mass
         self.shape.friction = 0
         self.shape.filter = self._walk_filter
+        self.shape.parent = self
         self.game.world.space.add(self.body, self.shape)
 
         # Sprite
@@ -74,6 +78,8 @@ class Dragon(Character):
         self.fire_sprite.scale = self.fire_size
 
     def step(self):
+        self.health -= self.p.health_decay
+
         actions = self.policy(game=self.game)
         (x, y, r), a = actions
 
@@ -108,8 +114,8 @@ class Dragon(Character):
                     if distance < self.p.eating_distance:
                         self.eat(animal)
 
-            # 2. If near the key, holds it.
-            # 3. If near a gate and has key, unlocks it.
+            # TODO: 2. If near the key, holds it.
+            # TODO: 3. If near a gate and has key, unlocks it.
 
     def _get_firing_position(self):
         # TODO: Get the firing position
@@ -118,3 +124,10 @@ class Dragon(Character):
     def eat(self, animal):
         self.health += self.p.health_regen_amount
         animal.health = 0
+
+    def on_collision(self, other: Shape):
+        if other.shape.categories == CAT_ARROW:
+            self.health -= self.p.health_decay_arrow
+        elif other.shape.categories == CAT_WALL and self._unlocked_gate:
+            # End game! You won!
+            pass

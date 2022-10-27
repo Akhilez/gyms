@@ -5,8 +5,8 @@ import arcade
 import numpy as np
 import pymunk
 from pymunk import Space
+from dracarys.collisions import collision_post
 from dracarys.constants import CAT_WALL, CAT_ROCK, CAT_TOWER, CAT_ARROW
-
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.constants import SPRITE_LIST_STATIC
@@ -32,6 +32,9 @@ class World:
         ) = self._create_terrain()
 
         self.towers = self._create_towers()
+
+        self.collision_handler = self.space.add_default_collision_handler()
+        self.collision_handler.post_solve = collision_post
 
     def step(self):
         self.space.step(dt=1.0 / self.game.params.ui.fps)

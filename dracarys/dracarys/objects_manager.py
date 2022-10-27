@@ -14,7 +14,7 @@ class ObjectsManager:
         self.game = game
         self.params = game.params.objects_manager
 
-        self.animals = self.generate_animals(self.params.n_animals)
+        self.animals = [Animal(self.game) for _ in range(self.params.n_animals)]
         for animal in self.animals:
             animal.health = random()
 
@@ -28,10 +28,8 @@ class ObjectsManager:
             character.step()
 
         # Clean up any dead characters
-        dead_animals = [a for a in self.animals if a.health <= 0]
-        [self.game.world.space.remove(a.shape) for a in dead_animals]
-        [a.sprite.kill() for a in dead_animals]
-        self.animals = [a for a in self.animals if a.health > 0]
+        self.animals = self._clean_up_dead(self.animals)
+        self.arrows = self._clean_up_dead(self.arrows)
 
         # Spawn any new characters
         if len(self.animals) < self.params.n_animals:
@@ -39,3 +37,9 @@ class ObjectsManager:
 
     def generate_animals(self, n_animals) -> List[Animal]:
         return [Animal(self.game) for _ in range(n_animals)]
+
+    def _clean_up_dead(self, characters):
+        dead = [a for a in characters if a.health <= 0]
+        [self.game.world.space.remove(a.shape) for a in dead]
+        [a.sprite.kill() for a in dead]
+        return [a for a in characters if a.health > 0]
