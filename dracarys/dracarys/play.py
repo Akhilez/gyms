@@ -75,7 +75,7 @@ class App:
                 self.act_pressed = False
 
     def on_loop(self):
-        if self.player.health < 0:
+        if self._game.episode_manager.ended:
             self._running = False
 
         self._set_actions()

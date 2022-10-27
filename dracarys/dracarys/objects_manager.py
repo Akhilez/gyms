@@ -41,12 +41,16 @@ class ObjectsManager:
         if len(self.animals) < self.params.n_animals:
             self.animals.extend(self.generate_animals(self.params.n_animals - len(self.animals)))
 
+        # If all dragons die, then game ends.
+        if len([d for d in self.dragons if d.health > 0]) == 0:
+            self.game.episode_manager.ended = True
+
     def generate_animals(self, n_animals) -> List[Animal]:
         return [Animal(self.game) for _ in range(n_animals)]
 
     def on_crossbow_destroyed(self):
         """Check if all crossbows are broken, then acquire key"""
-        if all([c.burnt >= 1 for c in self.crossbows]):
+        if True: #all([c.burnt >= 1 for c in self.crossbows]):
             self.keys.append(Key(self.game))
             print("key is spawned")
 

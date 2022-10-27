@@ -7,6 +7,7 @@ from dracarys.constants import SPRITE_LIST_DYNAMIC, CAT_ANIMAL, CAT_DRAGON_FLY, 
 class Key:
     def __init__(self, game):
         self.game = game
+        self.acquired_by = None
 
         # Setup PyMunk body and shape
         self.body = Body()
@@ -42,4 +43,7 @@ class Key:
         self.sprite.radians = self.body.angle
 
     def step(self):
-        pass
+        if self.game.objects_manager.unlocked_gate:
+            self.body.position = self.game.world.gate.body.position
+        elif self.acquired_by is not None:
+            self.body.position = self.acquired_by.body.position

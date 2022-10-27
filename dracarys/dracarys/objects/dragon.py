@@ -65,6 +65,10 @@ class Dragon(Character):
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.fire_sprite)
 
+        # Key Stuff
+        self.acquired_key = False
+        self._key = None
+
     def draw(self):
         """Used to draw self onto arcade scene."""
         self.sprite.position = self.body.position
@@ -111,9 +115,25 @@ class Dragon(Character):
                     distance = get_distance(self._fire_position, animal.body.position)
                     if distance < self.p.eating_distance:
                         self.eat(animal)
+                        return
 
-            # TODO: 2. If near the key, holds it.
-            # TODO: 3. If near a gate and has key, unlocks it.
+            # 2. If near a gate and has key, unlocks it.
+            if self.acquired_key:
+                distance = get_distance(self._fire_position, self.game.world.gate.bb.center())
+                if distance < self.p.eating_distance:
+                    self.unlock()
+                    return
+
+            # 3. If near the key, hold it.
+            if not self.game.objects_manager.unlocked_gate:
+                for key in self.game.objects_manager.keys:
+                    distance = get_distance(self._fire_position, key.body.position)
+                    if distance < self.p.eating_distance:
+                        self.hold_key(key)
+
+        # If unlocked and outside the world, game over.
+        if self.game.objects_manager.unlocked_gate and not self.game.episode_manager.ended and self._is_outside_the_world():
+            self.game.episode_manager.ended = True
 
     def _get_firing_position(self):
         # TODO: Get the firing position
@@ -123,9 +143,26 @@ class Dragon(Character):
         self.health += self.p.health_regen_amount
         animal.health = 0
 
+    def unlock(self):
+        print("Unlocked gate")
+        self.game.objects_manager.unlocked_gate = True
+        self.shape.filter = ShapeFilter(mask=0)
+
+    def hold_key(self, key):
+        self.acquired_key = True
+        self._key = key
+        # Attach the key to the player
+        key.acquired_by = self
+
     def on_collision(self, other: Shape):
         if other.filter.categories == CAT_ARROW:
             self.health -= self.p.health_decay_arrow
         elif other.filter.categories == CAT_WALL and self.game.objects_manager.unlocked_gate:
             # End game! You won!
-            pass
+            self.game.episode_manager.ended = True
+
+    def _is_outside_the_world(self):
+        x = self.body.position[0]
+        y = self.body.position[1]
+
+        return not 0 < x < self.game.params.world.width or not 0 < y < self.game.params.world.height
