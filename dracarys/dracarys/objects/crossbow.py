@@ -1,14 +1,15 @@
 import math
+from os.path import join
 from random import random
 from arcade import Sprite, load_texture
-from dracarys.constants import SPRITE_LIST_DYNAMIC
+from dracarys.constants import SPRITE_LIST_DYNAMIC, BASE_DIR
 from dracarys.objects.arrow import Arrow
 from dracarys.objects.character import Character
 from dracarys.objects.health_bar import HealthBar
 from dracarys.utils import get_distance, get_angle
 
-CROSSBOW_SPRITE = 'objects/images/Crossbow.png'
-BROKEN_CROSSBOW_SPRITE = 'objects/images/Broken-Crossbow.png'
+CROSSBOW_SPRITE = join(BASE_DIR, 'objects/images/Crossbow.png')
+BROKEN_CROSSBOW_SPRITE = join(BASE_DIR, 'objects/images/Broken-Crossbow.png')
 
 
 class CrossBow(Character):

@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from os.path import join
 from random import random
 from typing import TYPE_CHECKING
 import arcade
@@ -6,7 +8,8 @@ import numpy as np
 import pymunk
 from pymunk import Space
 from dracarys.collisions import collision_post
-from dracarys.constants import CAT_WALL, CAT_ROCK, CAT_TOWER, CAT_ARROW
+from dracarys.constants import CAT_WALL, CAT_ROCK, CAT_TOWER, CAT_ARROW, BASE_DIR
+
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.constants import SPRITE_LIST_STATIC
@@ -56,7 +59,7 @@ class World:
 
         # Generate Sprites
         side = 128
-        sprite = "objects/images/Stone-1.png"
+        sprite = join(BASE_DIR, "objects/images/Stone-1.png")
         for layer in range(0, side * 5, side):
             for x in range(-side * 5, self.params.width + (5 * side), side):
                 # Create bottom wall
@@ -190,7 +193,7 @@ class World:
             towers.append(tower)
 
             cell = arcade.Sprite(
-                'objects/images/Fortress.png',
+                join(BASE_DIR, 'objects/images/Fortress.png'),
                 scale=s / 128,
                 center_x=x + s // 2,
                 center_y=y + s // 2,

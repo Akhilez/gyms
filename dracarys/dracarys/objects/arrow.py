@@ -1,11 +1,12 @@
 from __future__ import annotations
 import math
+from os.path import join
 from typing import TYPE_CHECKING
 from arcade import Sprite
 from pymunk import Body, Circle, ShapeFilter, Shape
 from dracarys.constants import (
     SPRITE_LIST_DYNAMIC, CAT_ARROW, CAT_TOWER, CAT_WALL,
-    CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK
+    CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK, BASE_DIR
 )
 if TYPE_CHECKING:
     from dracarys.game import Game
@@ -36,7 +37,7 @@ class Arrow(Character):
 
         # Sprite
         self.sprite = Sprite(
-            ':resources:images/space_shooter/laserBlue01.png',
+            join(BASE_DIR, 'objects/images/arrow.png'),
             scale=self.p.size / 64,
             angle=math.degrees(angle + math.pi / 2),
             center_x=self.body.position.x,

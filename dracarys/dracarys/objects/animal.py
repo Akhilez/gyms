@@ -1,12 +1,13 @@
 from __future__ import annotations
 import math
 from enum import Enum
+from os.path import join
 from random import random
 from typing import TYPE_CHECKING
 import arcade
 from arcade import Sprite
 from pymunk import Body, Circle, ShapeFilter
-from dracarys.constants import CAT_ANIMAL, SPRITE_LIST_DYNAMIC, DRAGON_ACTION_SPACE
+from dracarys.constants import CAT_ANIMAL, SPRITE_LIST_DYNAMIC, DRAGON_ACTION_SPACE, BASE_DIR
 from dracarys.objects.health_bar import HealthBar
 from dracarys.utils import get_distance, get_angle
 if TYPE_CHECKING:
@@ -66,7 +67,7 @@ class Animal(Character):
 
         # Sprite
         self.sprite = Sprite(
-            ANIMAL_SPRITES[self.type],
+            join(BASE_DIR, ANIMAL_SPRITES[self.type]),
             scale=self.p.size / 128,
             angle=self.body.angle,
             center_x=self.body.position.x,
@@ -96,7 +97,7 @@ class Animal(Character):
 
         if self.burnt >= 1 and not self._flipped:
             self._flipped = True
-            self.sprite.texture = arcade.load_texture(file_name=ANIMAL_DOWN_SPRITES[self.type])
+            self.sprite.texture = arcade.load_texture(file_name=join(BASE_DIR, ANIMAL_DOWN_SPRITES[self.type]))
 
         if self._is_in_water():
             self.health = 0

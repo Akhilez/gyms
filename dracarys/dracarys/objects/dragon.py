@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from os.path import join
 from typing import TYPE_CHECKING
 from dracarys.objects.health_bar import HealthBar
 from dracarys.utils import get_distance
@@ -8,7 +10,7 @@ import arcade
 from pymunk import ShapeFilter, Body, Circle, Shape
 from dracarys.constants import (
     CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK, CAT_ANIMAL, DRAGON_ACTION_SPACE, DiscreteActions, CAT_TOWER, CAT_ARROW,
-    CAT_WALL
+    CAT_WALL, BASE_DIR
 )
 from dracarys.objects.character import Character
 from dracarys.constants import SPRITE_LIST_DYNAMIC
@@ -40,7 +42,7 @@ class Dragon(Character):
         self.game.world.space.add(self.body, self.shape)
 
         # Sprite
-        image_source = "objects/images/dragon-1.png"
+        image_source = join(BASE_DIR, "objects/images/dragon-1.png")
         self.sprite = arcade.Sprite(
             image_source,
             scale=self.p.size / 128,
@@ -52,7 +54,7 @@ class Dragon(Character):
 
         # Fire Sprite
         self._fire_position = self.body.position
-        image_source = "objects/images/Fire.png"
+        image_source = join(BASE_DIR, "objects/images/Fire.png")
         self.fire_sprite = arcade.Sprite(
             image_source,
             scale=self.fire_size,
