@@ -39,6 +39,9 @@ class ObjectsManager:
     def generate_animals(self, n_animals) -> List[Animal]:
         return [Animal(self.game) for _ in range(n_animals)]
 
+    def on_crossbow_destroyed(self):
+        print('crossbow destroyed')
+
     def _clean_up_dead(self, characters):
         dead = [a for a in characters if a.health <= 0]
         [self.game.world.space.remove(a.shape) for a in dead]

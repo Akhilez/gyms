@@ -67,4 +67,6 @@ class CrossBow(Character):
 
     def burn(self):
         self.burnt += self.p.burn_amount
-        print(self.burnt)
+        if not self._broken and self.burnt >= 1:
+            # Check if all crossbows are broken, then acquire key
+            self.game.objects_manager.on_crossbow_destroyed()
