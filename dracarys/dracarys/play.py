@@ -39,7 +39,6 @@ class App:
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_w:
-                print("w pressed")
                 self.up_pressed = True
             elif event.key == pygame.K_s:
                 self.down_pressed = True

@@ -32,6 +32,7 @@ class World:
         ) = self._create_terrain()
 
         self.towers = self._create_towers()
+        self.gate = self._create_gate()
 
         self.collision_handler = self.space.add_default_collision_handler()
         self.collision_handler.post_solve = collision_post
@@ -197,6 +198,37 @@ class World:
             self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, cell)
         self.space.add(*towers)
         return towers
+
+    def _create_gate(self):
+        s = self.params.tower_size
+        terrain_w = self.params.width // self.params.cell_size
+        terrain_h = self.params.height // self.params.cell_size
+        gate = None
+        while gate is None:
+            x = int(random() * terrain_w)
+            y = int(random() * terrain_h)
+            if (x, y) in zip(*self.hill_indices):
+                continue
+
+            x *= self.params.cell_size
+            y *= self.params.cell_size
+            gate = pymunk.Poly(
+                self.space.static_body,
+                [(x, y), (x + s, y), (x + s, y + s), (x, y + s)],
+            )
+            gate.elasticity = 0.9
+            gate.friction = 0.0
+            gate.filter = pymunk.ShapeFilter(mask=0)
+            self.space.add(gate)
+
+            cell = arcade.Sprite(
+                ':resources:images/tiles/lockYellow.png',
+                scale=s / 128,
+                center_x=x + s // 2,
+                center_y=y + s // 2,
+            )
+            self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, cell)
+        return gate
 
     @staticmethod
     def _discretize_terrain(t):

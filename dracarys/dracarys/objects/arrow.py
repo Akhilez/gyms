@@ -52,10 +52,7 @@ class Arrow(Character):
     def step(self):
         vx, vy = self.body.velocity
         if abs(vx) + abs(vy) < 50:
-            print(self.body.velocity)
             self.health = 0
 
     def on_collision(self, _):
         self.health = 0
-
-
