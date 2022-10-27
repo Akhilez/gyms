@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from dracarys.objects.health_bar import HealthBar
 from dracarys.utils import get_distance
-
 if TYPE_CHECKING:
     from dracarys.game import Game
 import arcade
@@ -83,7 +82,7 @@ class Dragon(Character):
         self.health_bar.position = self._get_health_bar_position()
         self.health_bar.background_box.radians = self.body.angle
         self.health_bar.full_box.radians = self.body.angle
-        self.health_bar.angle = self.body.angle
+        self.health_bar.fullness = 1 - min(1, 1 - self.health)
 
         # Adjust Fire
         self.fire_sprite.position = self._fire_position
@@ -146,10 +145,6 @@ class Dragon(Character):
         # If unlocked and outside the world, game over.
         if self.game.objects_manager.unlocked_gate and not self.game.episode_manager.ended and self._is_outside_the_world():
             self.game.episode_manager.ended = True
-
-        self.health_bar.fullness = (
-                1 - min(1, 1 - self.health)
-        )
 
     def _get_firing_position(self):
         return self.body.local_to_world((0, 80 + self.fire_size * self.p.max_fire_radius * 3))

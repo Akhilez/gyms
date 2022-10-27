@@ -76,7 +76,7 @@ class HealthBar:
             # Set the full_box to be visible incase it wasn't then update the bar
             self.full_box.visible = True
             self.full_box.width = self._box_width * new_fullness
-            self.full_box.left = self._center_x - (self._box_width // 2)
+            # self.full_box.left = self._center_x - (self._box_width // 2)
 
     @property
     def position(self) -> Tuple[float, float]:

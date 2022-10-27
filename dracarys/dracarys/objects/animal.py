@@ -4,11 +4,9 @@ from random import random
 from typing import TYPE_CHECKING
 import arcade
 from arcade import Sprite
-from arcade.examples.sprite_health import IndicatorBar
 from pymunk import Body, Circle, ShapeFilter
 from dracarys.constants import CAT_ANIMAL, SPRITE_LIST_DYNAMIC, DRAGON_ACTION_SPACE
 from dracarys.objects.health_bar import HealthBar
-
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.objects.character import Character
@@ -76,28 +74,23 @@ class Animal(Character):
 
         self.health_bar: HealthBar = HealthBar(
             self,
-            (self.body.position.x, self.body.position.y),
+            self.shape.bb.center(),
             width=self.p.size,
             height=self.p.size//6
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.health_bar.background_box)
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.health_bar.full_box)
 
-    def remove_health_bar(self):
-        self.health_bar.sprite_list.remove()
-
     def draw(self):
         """Used to draw self onto arcade scene."""
         self.sprite.position = self.body.position
         self.sprite.radians = self.body.angle
 
-        self.health_bar.position = (
-            self.body.position.x,
-            self.body.position.y
-        )
-
+        self.health_bar.position = self.shape.bb.center()
         self.health_bar.background_box.radians = self.body.angle
         self.health_bar.full_box.radians = self.body.angle
+        self.health_bar.background_box.radians = self.body.angle
+        self.health_bar.fullness = 1 - min(1, self.burnt)
 
         if self.burnt >= 1 and not self._flipped:
             self._flipped = True
@@ -119,10 +112,6 @@ class Animal(Character):
         self.body.angle -= rotation
 
         self.health -= self.p.health_decay_rate
-
-        self.health_bar.fullness = (
-            1 - min(1, self.burnt)
-        )
 
     def burn(self):
         self.burnt += self.p.burn_amount
