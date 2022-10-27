@@ -17,11 +17,24 @@ class WorldParams(BaseModel):
     damping: float = 0.5
     n_towers: int = 3
     cell_size: int = 8
+    tower_size: int = 40
 
 
 class CharacterParams(BaseModel):
     initial_mass: float = 1
     size: float = 64
+
+
+class CrossBowParams(CharacterParams):
+    size: float = 28
+    observable_distance: float = 500
+    shoot_probability: float = 0.001
+    burn_amount: float = 1e-2
+
+
+class ArrowParams(CharacterParams):
+    initial_mass: float = 0
+    velocity: float = 1
 
 
 class DragonParams(CharacterParams):
@@ -44,6 +57,8 @@ class AnimalParams(CharacterParams):
 class ObjectsManagerParams(BaseModel):
     dragon: DragonParams = DragonParams()
     animal: AnimalParams = AnimalParams()
+    crossbow: CrossBowParams = CrossBowParams()
+    arrow: ArrowParams = ArrowParams()
     n_animals: int = 20
 
 

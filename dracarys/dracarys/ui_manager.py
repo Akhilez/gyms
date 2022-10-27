@@ -45,9 +45,8 @@ class UIManager:
         # Draw all objects
         self.draw_objects()
 
-        cx, cy = character.body.position
-
         # Position the camera
+        cx, cy = character.body.position
         self._center_camera_to_player(cx, cy)
 
         # Draw our Scene
@@ -66,6 +65,10 @@ class UIManager:
             animal.draw()
         for dragon in self.game.objects_manager.dragons:
             dragon.draw()
+        for crossbow in self.game.objects_manager.crossbows:
+            crossbow.draw()
+        for arrow in self.game.objects_manager.arrows:
+            arrow.draw()
 
     def get_screenshot_akhil(self, angle):
         w = self.params.width * 2

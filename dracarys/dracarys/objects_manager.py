@@ -2,7 +2,8 @@ from __future__ import annotations
 from random import random
 from dracarys.objects.animal import Animal
 from typing import TYPE_CHECKING, List
-# from dracarys.objects.crossbow import CrossBow
+from dracarys.objects.arrow import Arrow
+from dracarys.objects.crossbow import CrossBow
 from dracarys.objects.dragon import Dragon
 if TYPE_CHECKING:
     from dracarys.game import Game
@@ -17,7 +18,9 @@ class ObjectsManager:
         for animal in self.animals:
             animal.health = random()
 
-        # self.crossbow = self._generate_characters_crossbow()
+        self.crossbows = [CrossBow(self.game, t.center_of_gravity) for t in self.game.world.towers]
+        self.arrows: List[Arrow] = []
+
         self.dragons = [Dragon(self.game)]
 
     def step(self):

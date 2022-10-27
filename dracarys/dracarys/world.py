@@ -171,7 +171,7 @@ class World:
         return hills
 
     def _create_towers(self):
-        s = self.params.cell_size * 5
+        s = self.params.tower_size
         towers = []
         terrain_w = self.params.width // self.params.cell_size
         terrain_h = self.params.height // self.params.cell_size

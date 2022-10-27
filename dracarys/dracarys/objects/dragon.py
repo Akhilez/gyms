@@ -1,6 +1,6 @@
 from __future__ import annotations
-import math
 from typing import TYPE_CHECKING
+from dracarys.utils import get_distance
 if TYPE_CHECKING:
     from dracarys.game import Game
 from random import random
@@ -97,7 +97,7 @@ class Dragon(Character):
             # )
             # objects_fired = [s for s in objects_fired if s.shape.filter.categories == CAT_ANIMAL]
             for animal in self.game.objects_manager.animals:
-                distance = self.get_distance(self._fire_position, animal.body.position)
+                distance = get_distance(self._fire_position, animal.body.position)
                 if distance < self.fire_size * self.p.max_fire_size:
                     animal.burn()
 
@@ -106,7 +106,7 @@ class Dragon(Character):
             self._fire_position = self._get_firing_position()
             for animal in self.game.objects_manager.animals:
                 if animal.burnt >= 1:
-                    distance = self.get_distance(self._fire_position, animal.body.position)
+                    distance = get_distance(self._fire_position, animal.body.position)
                     if distance < self.p.eating_distance:
                         self.eat(animal)
 
@@ -120,13 +120,3 @@ class Dragon(Character):
     def eat(self, animal):
         self.health += self.p.health_regen_amount
         animal.health = 0
-
-    @staticmethod
-    def get_angle(a, b, c):
-        ang = math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(a[1] - b[1], a[0] - b[0])
-        return abs(ang)
-
-    @staticmethod
-    def get_distance(a, b):
-        distance = math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
-        return distance
