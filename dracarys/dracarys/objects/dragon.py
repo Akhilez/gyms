@@ -1,5 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
+from arcade.examples.sprite_health import IndicatorBar
+
 from dracarys.utils import get_distance
 if TYPE_CHECKING:
     from dracarys.game import Game
@@ -61,6 +64,12 @@ class Dragon(Character):
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.fire_sprite)
 
+        self.health_bar: IndicatorBar = IndicatorBar(
+            self,
+            self.game.ui_manager.scene.get_sprite_list(SPRITE_LIST_DYNAMIC),
+            (self.body.position.x, self.body.position.y),
+        )
+
         # Key Stuff
         self.acquired_key = False
         self._key = None
@@ -70,6 +79,15 @@ class Dragon(Character):
         self.sprite.position = self.body.position
         self.sprite.radians = self.body.angle
 
+        self.health_bar.position = (
+            self.body.position.x,
+            self.body.position.y
+        )
+
+        self.health_bar.background_box.radians = self.body.angle
+        self.health_bar.full_box.radians = self.body.angle
+
+        self.health_bar.angle = self.body.angle
         # Adjust Fire
         self.fire_sprite.position = self._fire_position
         self.fire_sprite.radians = self.body.angle
@@ -132,11 +150,16 @@ class Dragon(Character):
         if self.game.objects_manager.unlocked_gate and not self.game.episode_manager.ended and self._is_outside_the_world():
             self.game.episode_manager.ended = True
 
+        self.health_bar.fullness = (
+            1 - min(1, 1 - self.health)
+        )
+
     def _get_firing_position(self):
         return self.body.local_to_world((0, 80 + self.fire_size * self.p.max_fire_radius * 3))
 
     def eat(self, animal):
-        self.health += self.p.health_regen_amount
+        if not self.health > 0.9:
+            self.health += self.p.health_regen_amount
         animal.health = 0
 
     def unlock(self):

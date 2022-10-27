@@ -1,4 +1,6 @@
 import pygame
+from arcade.examples.sprite_health import INDICATOR_BAR_OFFSET
+
 from dracarys.constants import DiscreteActions
 from dracarys.game import Game
 
@@ -83,6 +85,8 @@ class App:
 
     def on_render(self):
         self._display.fill((255, 255, 255))
+        # while len(self._game.objects_manager.animals) < 20:
+        #     self.generate_animal()
         image = self.player.render()
         image = image.transpose((1, 0, 2))
         self._display.blit(pygame.surfarray.make_surface(image), (0, 0))

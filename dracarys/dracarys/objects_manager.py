@@ -57,4 +57,6 @@ class ObjectsManager:
         dead = [a for a in characters if a.health <= 0]
         [self.game.world.space.remove(a.shape) for a in dead]
         [a.sprite.kill() for a in dead]
+        dead_animals = [a for a in characters if a is Animal and a.health <= 0]
+        [(a.health_bar.background_box.kill(), a.health_bar.full_box.kill()) for a in dead_animals]
         return [a for a in characters if a.health > 0]

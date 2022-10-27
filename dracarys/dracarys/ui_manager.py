@@ -91,7 +91,7 @@ class UIManager:
         return image
 
     def get_screenshot(self, angle):
-        return self.get_screenshot_akhil(angle)
+        return self.get_screenshot_brian(angle)
 
     def _center_camera_to_player(self, x, y):
         cx = x - (self.camera.viewport_width / 2)
