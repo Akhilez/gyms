@@ -22,7 +22,7 @@ class CharacterParams(BaseModel):
 
 
 class CrossBowParams(CharacterParams):
-    size: float = 35
+    size: float = 45
     observable_distance: float = 500
     shoot_probability: float = 1 / (60 * 2)
     burn_amount: float = 1e-2
