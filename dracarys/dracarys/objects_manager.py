@@ -26,8 +26,11 @@ class ObjectsManager:
         self.keys = []
         self.dragons = [Dragon(self.game)]
 
+    def objects(self):
+        return *self.dragons, *self.animals, *self.crossbows, *self.arrows, *self.keys
+
     def step(self):
-        for character in (*self.dragons, *self.animals, *self.crossbows, *self.arrows, *self.keys):
+        for character in self.objects():
             character.step()
 
         # Clean up any dead characters

@@ -61,16 +61,8 @@ class UIManager:
         pass
 
     def draw_objects(self):
-        for animal in self.game.objects_manager.animals:
-            animal.draw()
-        for dragon in self.game.objects_manager.dragons:
-            dragon.draw()
-        for crossbow in self.game.objects_manager.crossbows:
-            crossbow.draw()
-        for arrow in self.game.objects_manager.arrows:
-            arrow.draw()
-        for key in self.game.objects_manager.keys:
-            key.draw()
+        for obj in self.game.objects_manager.objects():
+            obj.draw()
 
     def get_screenshot_akhil(self, angle):
         w = self.params.width * 2
