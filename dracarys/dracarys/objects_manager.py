@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, List
 from dracarys.objects.arrow import Arrow
 from dracarys.objects.crossbow import CrossBow
 from dracarys.objects.dragon import Dragon
+from dracarys.objects.key import Key
+
 if TYPE_CHECKING:
     from dracarys.game import Game
 
@@ -21,7 +23,7 @@ class ObjectsManager:
 
         self.crossbows = [CrossBow(self.game, t.center_of_gravity) for t in self.game.world.towers]
         self.arrows: List[Arrow] = []
-
+        self.keys = []
         self.dragons = [Dragon(self.game)]
 
     def step(self):
@@ -40,7 +42,10 @@ class ObjectsManager:
         return [Animal(self.game) for _ in range(n_animals)]
 
     def on_crossbow_destroyed(self):
-        print('crossbow destroyed')
+        """Check if all crossbows are broken, then acquire key"""
+        if all([c.burnt >= 1 for c in self.crossbows]):
+            self.keys.append(Key(self.game))
+            print("key is spawned")
 
     def _clean_up_dead(self, characters):
         dead = [a for a in characters if a.health <= 0]
