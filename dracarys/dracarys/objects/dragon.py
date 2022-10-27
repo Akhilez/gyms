@@ -126,8 +126,8 @@ class Dragon(Character):
         animal.health = 0
 
     def on_collision(self, other: Shape):
-        if other.shape.categories == CAT_ARROW:
+        if other.filter.categories == CAT_ARROW:
             self.health -= self.p.health_decay_arrow
-        elif other.shape.categories == CAT_WALL and self._unlocked_gate:
+        elif other.filter.categories == CAT_WALL and self._unlocked_gate:
             # End game! You won!
             pass
