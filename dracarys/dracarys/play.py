@@ -1,4 +1,5 @@
 import pygame
+from dracarys.constants import DiscreteActions
 from dracarys.game import Game
 
 FORCE = 0.5
@@ -110,6 +111,8 @@ class App:
             r -= ROTATION
         if self.turn_right:
             r += ROTATION
+        if self.fire_pressed:
+            a = DiscreteActions.FIRE
 
         self.actions = (x, y, r), a
 

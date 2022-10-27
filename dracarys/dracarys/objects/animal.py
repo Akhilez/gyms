@@ -2,11 +2,10 @@ from __future__ import annotations
 from enum import Enum
 from random import random
 from typing import TYPE_CHECKING
+import arcade
 from arcade import Sprite
 from pymunk import Body, Circle, ShapeFilter
-from dracarys.constants import CAT_ANIMAL, SPRITE_LIST_DYNAMIC
-from dracarys.rules import ACTION_SPACE
-
+from dracarys.constants import CAT_ANIMAL, SPRITE_LIST_DYNAMIC, DRAGON_ACTION_SPACE
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.objects.character import Character
@@ -21,7 +20,8 @@ class AnimalTypes(Enum):
 
     @staticmethod
     def sample():
-        return list(AnimalTypes)[int(random() * 3)]
+        all_types = list(AnimalTypes)
+        return all_types[int(random() * len(all_types))]
 
 
 ANIMAL_SPRITES = {
@@ -47,7 +47,9 @@ class Animal(Character):
         self.type = AnimalTypes.sample()
         self.p = game.params.objects_manager.animal
 
-        self.action_space = ACTION_SPACE
+        self.action_space = DRAGON_ACTION_SPACE
+        self.burnt = 0
+        self._flipped = False
 
         # Setup PyMunk body and shape
         self.body = Body()
@@ -78,6 +80,10 @@ class Animal(Character):
         self.sprite.position = self.body.position
         self.sprite.radians = self.body.angle
 
+        if self.burnt > 1 and not self._flipped:
+            self._flipped = True
+            self.sprite.texture = arcade.load_texture(file_name=ANIMAL_DOWN_SPRITES[self.type])
+
     def step(self):
         actions = self.policy(game=self.game)
         (x, y, r), a = actions
@@ -91,3 +97,7 @@ class Animal(Character):
         self.body.angle -= rotation
 
         self.health -= self.p.health_decay_rate
+
+    def burn(self):
+        self.burnt += self.p.burn_amount
+        print(self.burnt)
