@@ -59,7 +59,7 @@ class ObjectsManagerParams(BaseModel):
     animal: AnimalParams = AnimalParams()
     crossbow: CrossBowParams = CrossBowParams()
     arrow: ArrowParams = ArrowParams()
-    n_animals: int = 20
+    n_animals: int = 10
 
 
 class StatsParams(BaseModel):

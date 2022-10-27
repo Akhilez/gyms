@@ -158,7 +158,6 @@ class Dragon(Character):
         animal.health = 0
 
     def unlock(self):
-        print("Unlocked gate")
         self.game.objects_manager.unlocked_gate = True
         self.shape.filter = ShapeFilter(mask=0)
 
