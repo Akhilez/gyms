@@ -80,6 +80,9 @@ class Animal(Character):
             height=self.p.size//6
         )
 
+    def remove_health_bar(self):
+        self.health_bar.sprite_list.remove()
+
     def draw(self):
         """Used to draw self onto arcade scene."""
         self.sprite.position = self.body.position
@@ -113,6 +116,10 @@ class Animal(Character):
         self.body.angle -= rotation
 
         self.health -= self.p.health_decay_rate
+
+        self.health_bar.fullness = (
+            1 - min(1, self.burnt)
+        )
 
     def burn(self):
         self.burnt += self.p.burn_amount
