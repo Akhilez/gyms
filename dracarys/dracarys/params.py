@@ -28,13 +28,15 @@ class CharacterParams(BaseModel):
 class CrossBowParams(CharacterParams):
     size: float = 28
     observable_distance: float = 500
-    shoot_probability: float = 0.001
+    shoot_probability: float = 1 / (60 * 2)
     burn_amount: float = 1e-2
+    min_reload_time: int = 60  # 1 second
 
 
 class ArrowParams(CharacterParams):
-    initial_mass: float = 0
-    velocity: float = 1
+    size: float = 28
+    initial_mass: float = 0.1
+    impulse: float = 30
 
 
 class DragonParams(CharacterParams):
@@ -44,6 +46,8 @@ class DragonParams(CharacterParams):
     fire_growth_rate: float = 0.1
     eating_distance: float = 64
     health_regen_amount: float = 0.1
+    health_decay: float = 0.001
+    health_decay_arrow: float = 0.05
 
 
 class AnimalParams(CharacterParams):

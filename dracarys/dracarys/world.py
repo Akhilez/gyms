@@ -5,7 +5,8 @@ import arcade
 import numpy as np
 import pymunk
 from pymunk import Space
-from dracarys.constants import CAT_WALL, CAT_ROCK
+from dracarys.constants import CAT_WALL, CAT_ROCK, CAT_TOWER, CAT_ARROW
+
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.constants import SPRITE_LIST_STATIC
@@ -118,21 +119,9 @@ class World:
 
     def _make_grid(self, indices, sprite, sprite_side=128):
         s = self.params.cell_size
-        # cells = []
         for x, y in zip(*indices):
             x *= s
             y *= s
-            # cell = pymunk.Poly(
-            #     self.space.static_body,
-            #     [(x, y), (x + s, y), (x + s, y + s), (x, y + s)],
-            # )
-            # cell.filter = ShapeFilter(
-            #     categories=CAT_GROUND,
-            #     # Don't collide with anything. Will this work?
-            #     mask=0
-            # )
-            # cells.append(cell)
-
             cell = arcade.Sprite(
                 sprite,
                 scale=s / sprite_side,
@@ -140,7 +129,6 @@ class World:
                 center_y=y + s // 2,
             )
             self.game.ui_manager.scene.add_sprite(SPRITE_LIST_STATIC, cell)
-        # return cells
 
     def _make_hills(self, hill_indices, sprite):
         s = self.params.cell_size
@@ -191,7 +179,10 @@ class World:
             # hill.body.position = (x, y)
             tower.elasticity = 0.9
             tower.friction = 0.0
-            tower.filter = pymunk.ShapeFilter(group=CAT_ROCK, categories=CAT_ROCK)
+            tower.filter = pymunk.ShapeFilter(
+                group=CAT_TOWER, categories=CAT_TOWER,
+                mask=pymunk.ShapeFilter.ALL_MASKS() ^ CAT_ARROW
+            )
             towers.append(tower)
 
             cell = arcade.Sprite(

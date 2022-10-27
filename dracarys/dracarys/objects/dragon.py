@@ -7,7 +7,7 @@ from random import random
 import arcade
 from pymunk import ShapeFilter, Body, Circle
 from dracarys.constants import (
-    CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK, CAT_ANIMAL, DRAGON_ACTION_SPACE, DiscreteActions
+    CAT_DRAGON_WALK, CAT_DRAGON_FLY, CAT_ROCK, CAT_ANIMAL, DRAGON_ACTION_SPACE, DiscreteActions, CAT_TOWER
 )
 from dracarys.objects.character import Character
 from dracarys.constants import SPRITE_LIST_DYNAMIC
@@ -25,7 +25,7 @@ class Dragon(Character):
         self._fly_filter = ShapeFilter(
             categories=CAT_DRAGON_FLY,
             # When flying, collides with all except rocks & animals
-            mask=ShapeFilter.ALL_MASKS() ^ (CAT_ROCK | CAT_ANIMAL)
+            mask=ShapeFilter.ALL_MASKS() ^ (CAT_ROCK | CAT_TOWER | CAT_ANIMAL)
         )
 
         # Setup PyMunk body and shape
@@ -90,16 +90,14 @@ class Dragon(Character):
         else:
             self.fire_size = min(1, self.fire_size + self.p.fire_growth_rate)
             self._fire_position = self._get_firing_position()
-            # objects_fired = self.game.world.space.point_query(
-            #     self._fire_position,
-            #     max_distance=self.fire_size * self.p.max_fire_size,
-            #     shape_filter=ShapeFilter(categories=CAT_ANIMAL)
-            # )
-            # objects_fired = [s for s in objects_fired if s.shape.filter.categories == CAT_ANIMAL]
             for animal in self.game.objects_manager.animals:
                 distance = get_distance(self._fire_position, animal.body.position)
                 if distance < self.fire_size * self.p.max_fire_size:
                     animal.burn()
+            for crossbow in self.game.objects_manager.crossbows:
+                distance = get_distance(self._fire_position, crossbow.center)
+                if distance < self.fire_size * self.p.max_fire_size * 2:
+                    crossbow.burn()
 
         if a == DiscreteActions.ACT:
             # 1. If near a burnt animal, eats it.

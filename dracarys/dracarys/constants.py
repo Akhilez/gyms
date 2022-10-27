@@ -3,7 +3,7 @@ from gym.spaces import Discrete, Tuple, Box
 # Collision Filter Categories
 CAT_WALL = 1
 CAT_ROCK = 2
-CAT_TOWER = 2
+CAT_TOWER = 7
 CAT_DRAGON_WALK = 3
 CAT_DRAGON_FLY = 4
 CAT_ANIMAL = 5

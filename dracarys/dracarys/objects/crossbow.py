@@ -1,10 +1,10 @@
+import math
 from random import random
 from arcade import Sprite, load_texture
-from pymunk import Body, Circle, ShapeFilter
-from pymunk._chipmunk.lib import CP_BODY_TYPE_STATIC
 from dracarys.constants import SPRITE_LIST_DYNAMIC
+from dracarys.objects.arrow import Arrow
 from dracarys.objects.character import Character
-from dracarys.utils import get_distance
+from dracarys.utils import get_distance, get_angle
 
 CROSSBOW_SPRITE = 'objects/images/Crossbow.png'
 BROKEN_CROSSBOW_SPRITE = 'objects/images/Broken-Crossbow.png'
@@ -15,26 +15,17 @@ class CrossBow(Character):
         super(CrossBow, self).__init__(game)
         self.p = game.params.objects_manager.crossbow
         self.center = center
+        self._reloading = 0
 
-        self.angle = random() * 360
+        self.angle = random() * math.pi
         self.burnt = 0
         self._broken = False
-
-        # Setup PyMunk body and shape
-        # self.body = Body(body_type=CP_BODY_TYPE_STATIC)
-        # self.body.position = position
-        # self.body.angle = random() * 360
-        # self.shape = Circle(self.body, radius=self.p.size)
-        # self.shape.mass = self.p.initial_mass
-        # self.shape.friction = 0.0
-        # self.shape.filter = ShapeFilter(mask=0)
-        # self.game.world.space.add(self.body, self.shape)
 
         # Sprite
         self.sprite = Sprite(
             CROSSBOW_SPRITE,
             scale=self.p.size / 150,
-            angle=self.angle,
+            angle=math.degrees(self.angle),
             center_x=center[0],
             center_y=center[1],
         )
@@ -49,6 +40,10 @@ class CrossBow(Character):
             self.sprite.texture = load_texture(file_name=BROKEN_CROSSBOW_SPRITE)
 
     def step(self):
+        if self._broken:
+            return
+        self._reloading += 1
+
         min_distance = 999999
         min_dragon = None
         for dragon in self.game.objects_manager.dragons:
@@ -59,13 +54,17 @@ class CrossBow(Character):
 
         if min_dragon is not None:
             self.aim(min_dragon)
-            if random() < self.p.shoot_probability():
-                self.shoot(min_dragon)
+            if self._reloading > self.p.min_reload_time:
+                if random() < self.p.shoot_probability:
+                    self.shoot()
 
     def aim(self, dragon):
-        # TODO: Aim
-        pass
+        self.angle = get_angle((self.center[0] + 10, self.center[1]), self.center, dragon.shape.bb.center())
 
-    def shoot(self, dragon):
-        # TODO: Shoot
-        pass
+    def shoot(self):
+        self.game.objects_manager.arrows.append(Arrow(self.game, self.center, self.angle - math.pi / 2))
+        self._reloading = 0
+
+    def burn(self):
+        self.burnt += self.p.burn_amount
+        print(self.burnt)

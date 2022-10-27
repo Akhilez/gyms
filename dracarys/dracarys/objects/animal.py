@@ -59,6 +59,7 @@ class Animal(Character):
             random() * self.game.params.world.height
         )
         self.body.angle = random() * 360
+        # TODO: Update this to a box.
         self.shape = Circle(self.body, radius=self.p.size)
         self.shape.mass = self.p.initial_mass
         self.shape.friction = 0.0
@@ -100,4 +101,3 @@ class Animal(Character):
 
     def burn(self):
         self.burnt += self.p.burn_amount
-        print(self.burnt)
