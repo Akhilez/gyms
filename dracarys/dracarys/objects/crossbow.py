@@ -4,6 +4,7 @@ from arcade import Sprite, load_texture
 from dracarys.constants import SPRITE_LIST_DYNAMIC
 from dracarys.objects.arrow import Arrow
 from dracarys.objects.character import Character
+from dracarys.objects.health_bar import HealthBar
 from dracarys.utils import get_distance, get_angle
 
 CROSSBOW_SPRITE = 'objects/images/Crossbow.png'
@@ -31,6 +32,15 @@ class CrossBow(Character):
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.sprite)
 
+        # Health bar
+        self.health_bar = HealthBar(
+            self,
+            (self.center[0], self.center[1] + 20),
+            width=self.p.size,
+        )
+        self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.health_bar.background_box)
+        self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.health_bar.full_box)
+
     def draw(self):
         if not self._broken:
             self.sprite.radians = self.angle
@@ -38,6 +48,9 @@ class CrossBow(Character):
         if self.burnt >= 1 and not self._broken:
             self._broken = True
             self.sprite.texture = load_texture(file_name=BROKEN_CROSSBOW_SPRITE)
+
+        self.health_bar.position = (self.center[0], self.center[1] + 20)
+        self.health_bar.fullness = 1 - min(1, self.burnt)
 
     def step(self):
         if self._broken:

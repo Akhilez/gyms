@@ -43,7 +43,7 @@ class DragonParams(CharacterParams):
     eating_distance: float = 64
     health_regen_amount: float = 0.1
     health_decay: float = 0.0005
-    health_decay_arrow: float = 0  # 0.05
+    health_decay_arrow: float = 0.05
 
 
 class AnimalParams(CharacterParams):
@@ -59,7 +59,7 @@ class ObjectsManagerParams(BaseModel):
     animal: AnimalParams = AnimalParams()
     crossbow: CrossBowParams = CrossBowParams()
     arrow: ArrowParams = ArrowParams()
-    n_animals: int = 20
+    n_animals: int = 10
 
 
 class StatsParams(BaseModel):
