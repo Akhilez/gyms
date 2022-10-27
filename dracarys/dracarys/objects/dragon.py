@@ -19,8 +19,6 @@ class Dragon(Character):
         super(Dragon, self).__init__(game)
         self.p = game.params.objects_manager.dragon
         self.action_space = DRAGON_ACTION_SPACE
-        self._acquired_key = False
-        self._unlocked_gate = False
         self.fire_size = 0.0  # (0-1)
 
         # Collision Filters
@@ -128,6 +126,6 @@ class Dragon(Character):
     def on_collision(self, other: Shape):
         if other.filter.categories == CAT_ARROW:
             self.health -= self.p.health_decay_arrow
-        elif other.filter.categories == CAT_WALL and self._unlocked_gate:
+        elif other.filter.categories == CAT_WALL and self.game.objects_manager.unlocked_gate:
             # End game! You won!
             pass

@@ -13,6 +13,7 @@ class ObjectsManager:
     def __init__(self, game: Game):
         self.game = game
         self.params = game.params.objects_manager
+        self.unlocked_gate = False
 
         self.animals = [Animal(self.game) for _ in range(self.params.n_animals)]
         for animal in self.animals:
