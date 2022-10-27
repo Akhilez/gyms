@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod, ABC
+from random import random
 from typing import TYPE_CHECKING
 import numpy as np
 if TYPE_CHECKING:
@@ -30,3 +31,17 @@ class Character(ABC):
 
     def step(self):
         pass
+
+    def _get_random_ground_position(self):
+        x, y = (
+            random() * self.game.params.world.width,
+            random() * self.game.params.world.height
+        )
+
+        xr = self.body.position[0] // self.game.params.world.cell_size
+        yr = self.body.position[1] // self.game.params.world.cell_size
+
+        if (xr, yr) in zip(*self.game.world.hill_indices):
+            return self._get_random_ground_position()
+        return x, y
+

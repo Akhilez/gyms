@@ -2,20 +2,17 @@ from random import random
 from arcade import Sprite
 from pymunk import Body, Circle, ShapeFilter
 from dracarys.constants import SPRITE_LIST_DYNAMIC, CAT_ANIMAL, CAT_DRAGON_FLY, CAT_DRAGON_WALK, CAT_WALL, CAT_ROCK
+from dracarys.objects.character import Character
 
 
-class Key:
+class Key(Character):
     def __init__(self, game):
-        self.game = game
+        super(Key, self).__init__(game)
         self.acquired_by = None
 
         # Setup PyMunk body and shape
         self.body = Body()
-        self.body.position = (
-            # TODO: Don't put one on top of rock/tower
-            random() * self.game.params.world.width,
-            random() * self.game.params.world.height
-        )
+        self.body.position = self._get_random_ground_position()
         self.body.angle = random() * 360
         self.shape = Circle(self.body, radius=16)
         self.shape.mass = 0.05

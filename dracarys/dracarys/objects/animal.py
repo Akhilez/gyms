@@ -53,13 +53,8 @@ class Animal(Character):
 
         # Setup PyMunk body and shape
         self.body = Body()
-        self.body.position = (
-            # TODO: Don't put one on top of rock/tower
-            random() * self.game.params.world.width,
-            random() * self.game.params.world.height
-        )
+        self.body.position = self._get_random_ground_position()
         self.body.angle = random() * 360
-        # TODO: Update this to a box.
         self.shape = Circle(self.body, radius=self.p.size)
         self.shape.mass = self.p.initial_mass
         self.shape.friction = 0.0
