@@ -1,10 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-
-from arcade.examples.sprite_health import IndicatorBar
-
 from dracarys.objects.health_bar import HealthBar
 from dracarys.utils import get_distance
+
 if TYPE_CHECKING:
     from dracarys.game import Game
 import arcade
@@ -67,7 +65,8 @@ class Dragon(Character):
 
         self.health_bar: HealthBar = HealthBar(
             self,
-            self.shape.bb.center()
+            self._get_health_bar_position(),
+            width=self.p.size // 2,
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.health_bar.background_box)
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.health_bar.full_box)
@@ -81,11 +80,11 @@ class Dragon(Character):
         self.sprite.position = self.body.position
         self.sprite.radians = self.body.angle
 
-        self.health_bar.position = self.shape.bb.center()
+        self.health_bar.position = self._get_health_bar_position()
         self.health_bar.background_box.radians = self.body.angle
         self.health_bar.full_box.radians = self.body.angle
-
         self.health_bar.angle = self.body.angle
+
         # Adjust Fire
         self.fire_sprite.position = self._fire_position
         self.fire_sprite.radians = self.body.angle
@@ -149,11 +148,14 @@ class Dragon(Character):
             self.game.episode_manager.ended = True
 
         self.health_bar.fullness = (
-            1 - min(1, 1 - self.health)
+                1 - min(1, 1 - self.health)
         )
 
     def _get_firing_position(self):
         return self.body.local_to_world((0, 80 + self.fire_size * self.p.max_fire_radius * 3))
+
+    def _get_health_bar_position(self):
+        return self.body.local_to_world((0, -20))
 
     def eat(self, animal):
         if not self.health > 0.9:
