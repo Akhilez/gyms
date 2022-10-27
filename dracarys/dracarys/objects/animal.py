@@ -4,6 +4,7 @@ from random import random
 from typing import TYPE_CHECKING
 import arcade
 from arcade import Sprite
+from arcade.examples.sprite_health import IndicatorBar
 from pymunk import Body, Circle, ShapeFilter
 from dracarys.constants import CAT_ANIMAL, SPRITE_LIST_DYNAMIC, DRAGON_ACTION_SPACE
 if TYPE_CHECKING:
@@ -76,10 +77,26 @@ class Animal(Character):
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.sprite)
 
+        self.health_bar: IndicatorBar = IndicatorBar(
+            self,
+            self.game.ui_manager.scene.get_sprite_list(SPRITE_LIST_DYNAMIC),
+            (self.body.position.x, self.body.position.y),
+            width=self.p.size,
+            height=self.p.size//6
+        )
+
     def draw(self):
         """Used to draw self onto arcade scene."""
         self.sprite.position = self.body.position
         self.sprite.radians = self.body.angle
+
+        self.health_bar.position = (
+            self.body.position.x,
+            self.body.position.y
+        )
+
+        self.health_bar.background_box.radians = self.body.angle
+        self.health_bar.full_box.radians = self.body.angle
 
         if self.burnt >= 1 and not self._flipped:
             self._flipped = True

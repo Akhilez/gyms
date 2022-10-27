@@ -1,6 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
+from arcade.examples.sprite_health import IndicatorBar
+
 from dracarys.utils import get_distance
+
 if TYPE_CHECKING:
     from dracarys.game import Game
 from random import random
@@ -52,6 +56,8 @@ class Dragon(Character):
             angle=self.body.angle,
             center_x=self.body.position.x,
             center_y=self.body.position.y,
+            hit_box_detail=20,
+            hit_box_algorithm='Simple'
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.sprite)
 
@@ -67,11 +73,26 @@ class Dragon(Character):
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.fire_sprite)
 
+        self.health_bar: IndicatorBar = IndicatorBar(
+            self,
+            self.game.ui_manager.scene.get_sprite_list(SPRITE_LIST_DYNAMIC),
+            (self.body.position.x, self.body.position.y),
+        )
+
     def draw(self):
         """Used to draw self onto arcade scene."""
         self.sprite.position = self.body.position
         self.sprite.radians = self.body.angle
 
+        self.health_bar.position = (
+            self.body.position.x,
+            self.body.position.y
+        )
+
+        self.health_bar.background_box.radians = self.body.angle
+        self.health_bar.full_box.radians = self.body.angle
+
+        self.health_bar.angle = self.body.angle
         # Adjust Fire
         self.fire_sprite.position = self.body.position
         self.fire_sprite.radians = self.body.angle

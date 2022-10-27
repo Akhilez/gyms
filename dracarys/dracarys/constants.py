@@ -22,7 +22,6 @@ DRAGON_ACTION_SPACE = Tuple(
     ),
 )
 
-
 class DiscreteActions:
     NOOP = 0
     FIRE = 1
