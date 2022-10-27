@@ -17,7 +17,6 @@ class Key:
             random() * self.game.params.world.height
         )
         self.body.angle = random() * 360
-        # TODO: Update this to a box.
         self.shape = Circle(self.body, radius=16)
         self.shape.mass = 0.05
         self.shape.friction = 0.1

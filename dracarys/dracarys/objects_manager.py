@@ -6,7 +6,6 @@ from dracarys.objects.arrow import Arrow
 from dracarys.objects.crossbow import CrossBow
 from dracarys.objects.dragon import Dragon
 from dracarys.objects.key import Key
-
 if TYPE_CHECKING:
     from dracarys.game import Game
 
@@ -50,7 +49,7 @@ class ObjectsManager:
 
     def on_crossbow_destroyed(self):
         """Check if all crossbows are broken, then acquire key"""
-        if True: #all([c.burnt >= 1 for c in self.crossbows]):
+        if all([c.burnt >= 1 for c in self.crossbows]):
             self.keys.append(Key(self.game))
             print("key is spawned")
 

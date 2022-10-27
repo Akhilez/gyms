@@ -85,6 +85,9 @@ class Animal(Character):
             self._flipped = True
             self.sprite.texture = arcade.load_texture(file_name=ANIMAL_DOWN_SPRITES[self.type])
 
+        if self._is_in_water():
+            self.health = 0
+
     def step(self):
         actions = self.policy(game=self.game)
         (x, y, r), a = actions
@@ -101,3 +104,9 @@ class Animal(Character):
 
     def burn(self):
         self.burnt += self.p.burn_amount
+
+    def _is_in_water(self):
+        x = self.body.position[0] // self.game.params.world.cell_size
+        y = self.body.position[1] // self.game.params.world.cell_size
+
+        return (x, y) in zip(*self.game.world.water)
