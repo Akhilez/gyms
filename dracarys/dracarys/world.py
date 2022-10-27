@@ -56,7 +56,7 @@ class World:
 
         # Generate Sprites
         side = 128
-        sprite = ":resources:images/tiles/dirtCenter.png"
+        sprite = "objects/images/Stone-1.png"
         for layer in range(0, side * 5, side):
             for x in range(-side * 5, self.params.width + (5 * side), side):
                 # Create bottom wall
@@ -190,7 +190,7 @@ class World:
             towers.append(tower)
 
             cell = arcade.Sprite(
-                ':resources:images/tiles/lava.png',
+                'objects/images/Fortress.png',
                 scale=s / 128,
                 center_x=x + s // 2,
                 center_y=y + s // 2,

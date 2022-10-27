@@ -22,7 +22,7 @@ class CharacterParams(BaseModel):
 
 
 class CrossBowParams(CharacterParams):
-    size: float = 28
+    size: float = 35
     observable_distance: float = 500
     shoot_probability: float = 1 / (60 * 2)
     burn_amount: float = 1e-2
@@ -47,7 +47,7 @@ class DragonParams(CharacterParams):
 
 
 class AnimalParams(CharacterParams):
-    size: float = 10
+    size: float = 25
     rotation_max_speed: float = math.pi / 32
     force_max: float = 10
     health_decay_rate: float = 1e-3
