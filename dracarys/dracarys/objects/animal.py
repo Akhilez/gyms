@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 from enum import Enum
 from random import random
 from typing import TYPE_CHECKING
@@ -7,6 +8,7 @@ from arcade import Sprite
 from pymunk import Body, Circle, ShapeFilter
 from dracarys.constants import CAT_ANIMAL, SPRITE_LIST_DYNAMIC, DRAGON_ACTION_SPACE
 from dracarys.objects.health_bar import HealthBar
+from dracarys.utils import get_distance, get_angle
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.objects.character import Character
@@ -103,13 +105,27 @@ class Animal(Character):
         actions = self.policy(game=self.game)
         (x, y, r), a = actions
 
+        # Rotation
+        min_distance = 999999
+        min_dragon = None
+        for dragon in self.game.objects_manager.dragons:
+            distance = get_distance(dragon.body.position, self.body.position)
+            if distance < self.p.observable_distance and distance < min_distance:
+                min_distance = distance
+                min_dragon = dragon
+        if min_dragon is not None:
+            self.body.angle = get_angle(
+                (self.body.position[0], self.body.position[1] - 10), self.body.position, min_dragon.shape.bb.center()
+            ) + random() * math.pi / 20
+            x *= 2
+            y *= 2
+        else:
+            rotation = self.p.rotation_max_speed * r
+            self.body.angle -= rotation
+
         # Force
         force = (x * self.p.force_max, abs(y) * self.p.force_max)
         self.body.apply_force_at_local_point(force=force, point=(0, 0))
-
-        # Rotation
-        rotation = self.p.rotation_max_speed * r
-        self.body.angle -= rotation
 
         self.health -= self.p.health_decay_rate
 

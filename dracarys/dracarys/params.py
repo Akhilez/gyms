@@ -49,9 +49,10 @@ class DragonParams(CharacterParams):
 class AnimalParams(CharacterParams):
     size: float = 25
     rotation_max_speed: float = math.pi / 32
-    force_max: float = 10
+    force_max: float = 20
     health_decay_rate: float = 1e-3
     burn_amount: float = 5e-2
+    observable_distance: float = 200
 
 
 class ObjectsManagerParams(BaseModel):
