@@ -7,10 +7,6 @@ class EpisodeParams(BaseModel):
     total_timesteps: int = 10_000
 
 
-class RulesParams(BaseModel):
-    pass
-
-
 class WorldParams(BaseModel):
     height: int = 1024  # Multiple of 32
     width: int = 1024  # Multiple of 32
@@ -78,7 +74,6 @@ class UIParams(BaseModel):
 
 class Params(BaseModel):
     episode: EpisodeParams = EpisodeParams()
-    rules: RulesParams = RulesParams()
     world: WorldParams = WorldParams()
     objects_manager: ObjectsManagerParams = ObjectsManagerParams()
     stats: StatsParams = StatsParams()
