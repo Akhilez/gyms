@@ -4,10 +4,8 @@ from typing import TYPE_CHECKING
 from arcade.examples.sprite_health import IndicatorBar
 
 from dracarys.utils import get_distance
-
 if TYPE_CHECKING:
     from dracarys.game import Game
-from random import random
 import arcade
 from pymunk import ShapeFilter, Body, Circle, Shape
 from dracarys.constants import (
@@ -23,8 +21,6 @@ class Dragon(Character):
         super(Dragon, self).__init__(game)
         self.p = game.params.objects_manager.dragon
         self.action_space = DRAGON_ACTION_SPACE
-        self._acquired_key = False
-        self._unlocked_gate = False
         self.fire_size = 0.0  # (0-1)
 
         # Collision Filters
@@ -37,11 +33,8 @@ class Dragon(Character):
 
         # Setup PyMunk body and shape
         self.body = Body()
-        self.body.position = (
-            random() * self.game.params.world.width,
-            random() * self.game.params.world.height
-        )
-        self.shape = Circle(self.body, radius=self.p.size // 3)
+        self.body.position = self._get_random_ground_position()
+        self.shape = Circle(self.body, radius=self.p.size // 2)
         self.shape.mass = self.p.initial_mass
         self.shape.friction = 0
         self.shape.filter = self._walk_filter
@@ -49,21 +42,19 @@ class Dragon(Character):
         self.game.world.space.add(self.body, self.shape)
 
         # Sprite
-        image_source = "objects/images/dragon-1-without-flame.png"
+        image_source = "objects/images/dragon-1.png"
         self.sprite = arcade.Sprite(
             image_source,
             scale=self.p.size / 128,
             angle=self.body.angle,
             center_x=self.body.position.x,
             center_y=self.body.position.y,
-            hit_box_detail=20,
-            hit_box_algorithm='Simple'
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.sprite)
 
         # Fire Sprite
         self._fire_position = self.body.position
-        image_source = ":resources:images/tiles/torch1.png"
+        image_source = "objects/images/Fire.png"
         self.fire_sprite = arcade.Sprite(
             image_source,
             scale=self.fire_size,
@@ -78,6 +69,10 @@ class Dragon(Character):
             self.game.ui_manager.scene.get_sprite_list(SPRITE_LIST_DYNAMIC),
             (self.body.position.x, self.body.position.y),
         )
+
+        # Key Stuff
+        self.acquired_key = False
+        self._key = None
 
     def draw(self):
         """Used to draw self onto arcade scene."""
@@ -134,9 +129,25 @@ class Dragon(Character):
                     distance = get_distance(self._fire_position, animal.body.position)
                     if distance < self.p.eating_distance:
                         self.eat(animal)
+                        return
 
-            # TODO: 2. If near the key, holds it.
-            # TODO: 3. If near a gate and has key, unlocks it.
+            # 2. If near a gate and has key, unlocks it.
+            if self.acquired_key:
+                distance = get_distance(self._fire_position, self.game.world.gate.bb.center())
+                if distance < self.p.eating_distance:
+                    self.unlock()
+                    return
+
+            # 3. If near the key, hold it.
+            if not self.game.objects_manager.unlocked_gate:
+                for key in self.game.objects_manager.keys:
+                    distance = get_distance(self._fire_position, key.body.position)
+                    if distance < self.p.eating_distance:
+                        self.hold_key(key)
+
+        # If unlocked and outside the world, game over.
+        if self.game.objects_manager.unlocked_gate and not self.game.episode_manager.ended and self._is_outside_the_world():
+            self.game.episode_manager.ended = True
 
     def _get_firing_position(self):
         # TODO: Get the firing position
@@ -146,9 +157,26 @@ class Dragon(Character):
         self.health += self.p.health_regen_amount
         animal.health = 0
 
+    def unlock(self):
+        print("Unlocked gate")
+        self.game.objects_manager.unlocked_gate = True
+        self.shape.filter = ShapeFilter(mask=0)
+
+    def hold_key(self, key):
+        self.acquired_key = True
+        self._key = key
+        # Attach the key to the player
+        key.acquired_by = self
+
     def on_collision(self, other: Shape):
         if other.filter.categories == CAT_ARROW:
             self.health -= self.p.health_decay_arrow
-        elif other.filter.categories == CAT_WALL and self._unlocked_gate:
+        elif other.filter.categories == CAT_WALL and self.game.objects_manager.unlocked_gate:
             # End game! You won!
-            pass
+            self.game.episode_manager.ended = True
+
+    def _is_outside_the_world(self):
+        x = self.body.position[0]
+        y = self.body.position[1]
+
+        return not 0 < x < self.game.params.world.width or not 0 < y < self.game.params.world.height
