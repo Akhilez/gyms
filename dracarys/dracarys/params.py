@@ -42,7 +42,7 @@ class DragonParams(CharacterParams):
     fire_growth_rate: float = 0.1
     eating_distance: float = 64
     health_regen_amount: float = 0.1
-    health_decay: float = 0.0005
+    health_decay: float = 0.005
     health_decay_arrow: float = 0.05
 
 

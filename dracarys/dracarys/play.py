@@ -99,7 +99,37 @@ class App:
                 self.on_event(event)
             self.on_loop()
             self.on_render()
+        self.on_endgame()
         self.on_cleanup()
+
+    def on_endgame(self):
+        self._display.fill((0, 0, 0))
+        white = (255, 255, 255)
+        blue = (0, 0, 128)
+        font = pygame.font.Font('freesansbold.ttf', 20)
+        text2 = font.render('Thanks for Playing :)', True, white, blue)
+        if self._game.objects_manager.unlocked_gate:
+            text = font.render('You have successfully escaped! Congrats!', True, white, blue)
+        else:
+            text = font.render('You did not make it :(', True, white, blue)
+        textRect = text.get_rect()
+        textRect2 = text2.get_rect()
+        display_surface = pygame.display.set_mode((self._game.params.world.width, self._game.params.world.height // 1.5))
+        # set the center of the rectangular object.
+        textRect.center = (self._game.params.world.width // 2, self._game.params.world.height // 3)
+        textRect2.center = (self._game.params.world.width // 2, self._game.params.world.height // 2)
+        display_surface.blit(text, textRect)
+        display_surface.blit(text2, textRect2)
+
+        imp = pygame.image.load("objects/images/dragon-1-sitting.png").convert()
+        # Using blit to copy content from one surface to other
+        display_surface.blit(imp, (self._game.params.world.width // 2.7, 0))
+        pygame.display.flip()
+        game_over = True
+        while game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    game_over = False
 
     def _set_actions(self):
         x, y, r, a = 0.0, 0.0, 0.0, 0
