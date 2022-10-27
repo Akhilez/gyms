@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from arcade.examples.sprite_health import IndicatorBar
 
+from dracarys.objects.health_bar import HealthBar
 from dracarys.utils import get_distance
 if TYPE_CHECKING:
     from dracarys.game import Game
@@ -64,11 +65,12 @@ class Dragon(Character):
         )
         self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.fire_sprite)
 
-        self.health_bar: IndicatorBar = IndicatorBar(
+        self.health_bar: HealthBar = HealthBar(
             self,
-            self.game.ui_manager.scene.get_sprite_list(SPRITE_LIST_DYNAMIC),
-            (self.body.position.x, self.body.position.y),
+            self.shape.bb.center()
         )
+        self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.health_bar.background_box)
+        self.game.ui_manager.scene.add_sprite(SPRITE_LIST_DYNAMIC, self.health_bar.full_box)
 
         # Key Stuff
         self.acquired_key = False
@@ -79,11 +81,7 @@ class Dragon(Character):
         self.sprite.position = self.body.position
         self.sprite.radians = self.body.angle
 
-        self.health_bar.position = (
-            self.body.position.x,
-            self.body.position.y
-        )
-
+        self.health_bar.position = self.shape.bb.center()
         self.health_bar.background_box.radians = self.body.angle
         self.health_bar.full_box.radians = self.body.angle
 
