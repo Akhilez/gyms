@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 class Character(ABC):
     def __init__(self, game: Game):
         self.game = game
-        self.health = 5.0
+        self.health = 1.0
         self.action_space = None
 
         self.body = None

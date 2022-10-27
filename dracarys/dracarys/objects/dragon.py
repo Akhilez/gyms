@@ -150,11 +150,16 @@ class Dragon(Character):
         if self.game.objects_manager.unlocked_gate and not self.game.episode_manager.ended and self._is_outside_the_world():
             self.game.episode_manager.ended = True
 
+        self.health_bar.fullness = (
+            1 - min(1, 1 - self.health)
+        )
+
     def _get_firing_position(self):
         return self.body.local_to_world((0, 80 + self.fire_size * self.p.max_fire_radius * 3))
 
     def eat(self, animal):
-        self.health += self.p.health_regen_amount
+        if not self.health > 0.9:
+            self.health += self.p.health_regen_amount
         animal.health = 0
 
     def unlock(self):
