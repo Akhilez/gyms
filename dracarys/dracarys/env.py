@@ -4,7 +4,7 @@ from PIL import Image
 from gym import Env
 from gym.envs.registration import EnvSpec
 from gym.spaces import Box
-from dracarys.constants import DRAGON_ACTION_SPACE, DISCRETE_ACTION_SPACE, DiscreteActions
+from dracarys.constants import DISCRETE_ACTION_SPACE, DiscreteActions
 from dracarys.game import Game
 from dracarys.params import Params
 
@@ -68,7 +68,7 @@ class DracarysEnv(Env):
             self.game.step()
         done = self.game.episode_manager.ended
         observation = self.render()
-        reward = self._find_reward()
+        reward = self.player.stats.get_reward()
         info = self._create_info()
         return observation, reward, done, info
 
@@ -78,21 +78,11 @@ class DracarysEnv(Env):
         img = np.asarray(img)
         return img
 
-    def _find_reward(self) -> float:
-        delta = self.player.health - self.previous_health
-        if delta == self.game.params.objects_manager.dragon.health_decay:
-            return 0
-        if delta > 0:
-            return 10
-        if delta > self.game.params.objects_manager.dragon.health_decay:
-            return -1
-        return 0
-
     def _create_info(self) -> Mapping:
         return {}
 
 
-def test_env():
+def _test_env():
     from PIL import Image
     env = DracarysEnv()
     for i in range(5):
@@ -103,4 +93,4 @@ def test_env():
 
 
 if __name__ == '__main__':
-    test_env()
+    _test_env()

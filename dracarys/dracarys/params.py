@@ -63,8 +63,19 @@ class ObjectsManagerParams(BaseModel):
     n_animals: int = 10
 
 
+class RewardMap(BaseModel):
+    burnt_animal: float = 0.1
+    burnt_crossbow: float = 0.5
+    killed_animal: float = 0.5
+    destroyed_crossbow: float = 1
+    eaten_animal: float = 1
+    acquired_key: float = 5
+    unlocked: float = 10
+    flown_away: float = 10
+
+
 class StatsParams(BaseModel):
-    pass
+    reward_map: RewardMap = RewardMap()
 
 
 class UIParams(BaseModel):

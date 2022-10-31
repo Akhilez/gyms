@@ -1,8 +1,8 @@
 from __future__ import annotations
-
 from os.path import join
 from typing import TYPE_CHECKING
 from dracarys.objects.health_bar import HealthBar
+from dracarys.stats import DragonStats
 from dracarys.utils import get_distance
 if TYPE_CHECKING:
     from dracarys.game import Game
@@ -76,6 +76,9 @@ class Dragon(Character):
         self.acquired_key = False
         self._key = None
 
+        # Stats
+        self.stats = DragonStats(self)
+
     def draw(self):
         """Used to draw self onto arcade scene."""
         self.sprite.position = self.body.position
@@ -114,10 +117,16 @@ class Dragon(Character):
                 distance = get_distance(self._fire_position, animal.body.position)
                 if distance < self.fire_size * self.p.max_fire_radius * 2:
                     animal.burn()
+                    self.stats.has_burnt_animal = True
+                    if animal.burnt >= 1:
+                        self.stats.has_killed_animal = True
             for crossbow in self.game.objects_manager.crossbows:
                 distance = get_distance(self._fire_position, crossbow.center)
                 if distance < self.fire_size * self.p.max_fire_radius * 2:
                     crossbow.burn()
+                    self.stats.has_burnt_crossbow = True
+                    if crossbow.burnt >= 1:
+                        self.stats.has_destroyed_crossbow = True
 
         if a == DiscreteActions.ACT:
             self._fire_position = self._get_firing_position()
@@ -128,14 +137,14 @@ class Dragon(Character):
                     distance = get_distance(self._fire_position, animal.body.position)
                     if distance < self.p.eating_distance:
                         self.eat(animal)
-                        return
+                        self.stats.has_eaten_animal = True
 
             # 2. If near a gate and has key, unlocks it.
             if self.acquired_key:
                 distance = get_distance(self._fire_position, self.game.world.gate.bb.center())
                 if distance < self.p.eating_distance:
                     self.unlock()
-                    return
+                    self.stats.has_acquired_key = True
 
             # 3. If near the key, hold it.
             if not self.game.objects_manager.unlocked_gate:
@@ -143,10 +152,15 @@ class Dragon(Character):
                     distance = get_distance(self._fire_position, key.body.position)
                     if distance < self.p.eating_distance:
                         self.hold_key(key)
+                        self.stats.has_unlocked = True
 
         # If unlocked and outside the world, game over.
         if self.game.objects_manager.unlocked_gate and not self.game.episode_manager.ended and self._is_outside_the_world():
             self.game.episode_manager.ended = True
+            self.stats.has_flown_away = True
+
+        # Collect stats
+        self.stats.step(actions)
 
     def _get_firing_position(self):
         return self.body.local_to_world((0, 80 + self.fire_size * self.p.max_fire_radius * 3))

@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from os.path import join
 from random import random
 from typing import TYPE_CHECKING
@@ -9,7 +8,6 @@ import pymunk
 from pymunk import Space
 from dracarys.collisions import collision_post
 from dracarys.constants import CAT_WALL, CAT_ROCK, CAT_TOWER, CAT_ARROW, BASE_DIR
-
 if TYPE_CHECKING:
     from dracarys.game import Game
 from dracarys.constants import SPRITE_LIST_STATIC
