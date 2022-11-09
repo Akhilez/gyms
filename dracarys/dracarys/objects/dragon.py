@@ -116,17 +116,21 @@ class Dragon(Character):
             for animal in self.game.objects_manager.animals:
                 distance = get_distance(self._fire_position, animal.body.position)
                 if distance < self.fire_size * self.p.max_fire_radius * 2:
+                    old_health = animal.burnt
                     animal.burn()
-                    self.stats.has_burnt_animal = True
-                    if animal.burnt >= 1:
-                        self.stats.has_killed_animal = True
+                    if old_health < 1:
+                        self.stats.has_burnt_animal = True
+                        if animal.burnt >= 1:
+                            self.stats.has_killed_animal = True
             for crossbow in self.game.objects_manager.crossbows:
                 distance = get_distance(self._fire_position, crossbow.center)
                 if distance < self.fire_size * self.p.max_fire_radius * 2:
+                    old_health = crossbow.burnt
                     crossbow.burn()
-                    self.stats.has_burnt_crossbow = True
-                    if crossbow.burnt >= 1:
-                        self.stats.has_destroyed_crossbow = True
+                    if old_health < 1:
+                        self.stats.has_burnt_crossbow = True
+                        if crossbow.burnt >= 1:
+                            self.stats.has_destroyed_crossbow = True
 
         if a == DiscreteActions.ACT:
             self._fire_position = self._get_firing_position()

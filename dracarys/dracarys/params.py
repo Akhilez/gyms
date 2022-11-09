@@ -98,13 +98,16 @@ class Params(BaseModel):
         if mode == 'human_single_player':
             return Params()
         if mode == 'rl':
-            return Params()
+            return Params(
+                ui=UIParams(fps=100_000),
+                episode=EpisodeParams(frames_per_timestep=6),
+            )
 
 
-def test_params():
-    params = Params()
-    print(params.episode.frames_per_timestep)
+def _test_params():
+    params = Params(ui=UIParams(fps=100_000))
+    print(params.ui.fps)
 
 
 if __name__ == '__main__':
-    test_params()
+    _test_params()

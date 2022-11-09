@@ -1,10 +1,20 @@
+# Before arcade is imported
+import os
+os.environ["ARCADE_HEADLESS"] = "True"
+# export ARCADE_HEADLESS=True
+
+# The above is a shortcut for
+import pyglet
+pyglet.options["headless"] = True
+
+import arcade
 from typing import Mapping
 import numpy as np
 from PIL import Image
 from gym import Env
 from gym.envs.registration import EnvSpec
 from gym.spaces import Box
-from dracarys.constants import DISCRETE_ACTION_SPACE, DiscreteActions
+from dracarys.constants import DISCRETE_ACTION_SPACE, DiscreteActions, BASE_DIR
 from dracarys.game import Game
 from dracarys.params import Params
 
@@ -16,6 +26,7 @@ ROTATION = 1
 
 
 def discrete_actions_to_continuos(action):
+    assert type(int(action)) is int, f"Action must be int. But found {type(action)}. action: {action}"
     x, y, r, a = 0.0, 0.0, 0.0, 0
     if action == DiscreteActions.UP:# self.up_pressed:
         y += FORCE
@@ -85,11 +96,11 @@ class DracarysEnv(Env):
 def _test_env():
     from PIL import Image
     env = DracarysEnv()
-    for i in range(5):
-        action = discrete_actions_to_continuos(env.action_space.sample())
-        print(action)
-        obs, _, _, _ = env.step(action)
-        Image.fromarray(obs).show()
+    for i in range(20):
+        action = env.action_space.sample()
+        obs, reward, _, _ = env.step(action)
+        print(action, reward)
+        Image.fromarray(obs).save(BASE_DIR + f'/temp/images/img{i}.png')
 
 
 if __name__ == '__main__':

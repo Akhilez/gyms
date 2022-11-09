@@ -84,6 +84,7 @@ class DragonStats:
                 'n_unlocked': df.has_unlocked.sum(),
                 'n_flown_away': df.has_flown_away.sum(),
             }
+            self.frame_stats = {}
 
         # Reset flags
         self.has_burnt_animal = False
@@ -98,7 +99,7 @@ class DragonStats:
     def get_reward(self):
         stats = self.timestep_stats[self.game.episode_manager.timestep]
         reward = 0.0
-        for key in self.game.params.stats.__fields__.keys():
+        for key in self.game.params.stats.reward_map.__fields__.keys():
             if stats[f'n_{key}'] > 0:
-                reward += getattr(self.game.params.stats, key)
+                reward += getattr(self.game.params.stats.reward_map, key)
         return reward
