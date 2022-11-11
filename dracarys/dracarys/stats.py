@@ -103,3 +103,7 @@ class DragonStats:
             if stats[f'n_{key}'] > 0:
                 reward += getattr(self.game.params.stats.reward_map, key)
         return reward
+
+    def get_stats(self):
+        df = pd.DataFrame.from_dict(self.timestep_stats, orient='index')
+        return df

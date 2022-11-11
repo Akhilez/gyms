@@ -1,10 +1,12 @@
 # Before arcade is imported
 import os
+
 os.environ["ARCADE_HEADLESS"] = "True"
 # export ARCADE_HEADLESS=True
 
 # The above is a shortcut for
 import pyglet
+
 pyglet.options["headless"] = True
 
 import arcade
@@ -19,30 +21,32 @@ from dracarys.game import Game
 from dracarys.params import Params
 
 
-P = Params.make('rl')
+P = Params.make("rl")
 
 FORCE = 1
-ROTATION = 1
+ROTATION = 0.1
 
 
 def discrete_actions_to_continuos(action):
-    assert type(int(action)) is int, f"Action must be int. But found {type(action)}. action: {action}"
+    assert (
+        type(int(action)) is int
+    ), f"Action must be int. But found {type(action)}. action: {action}"
     x, y, r, a = 0.0, 0.0, 0.0, 0
-    if action == DiscreteActions.UP:# self.up_pressed:
+    if action == DiscreteActions.UP:  # self.up_pressed:
         y += FORCE
-    if action == DiscreteActions.DOWN:# self.down_pressed:
+    if action == DiscreteActions.DOWN:  # self.down_pressed:
         y -= FORCE
-    if action == DiscreteActions.LEFT:# self.left_pressed:
+    if action == DiscreteActions.LEFT:  # self.left_pressed:
         x -= FORCE
-    if action == DiscreteActions.RIGHT:# self.right_pressed:
+    if action == DiscreteActions.RIGHT:  # self.right_pressed:
         x += FORCE
-    if action == DiscreteActions.TURN_LEFT:# self.turn_left:
+    if action == DiscreteActions.TURN_LEFT:  # self.turn_left:
         r -= ROTATION
-    if action == DiscreteActions.TURN_RIGHT:# self.turn_right:
+    if action == DiscreteActions.TURN_RIGHT:  # self.turn_right:
         r += ROTATION
-    if action == DiscreteActions.FIRE:# self.fire_pressed:
+    if action == DiscreteActions.FIRE:  # self.fire_pressed:
         a = DiscreteActions.FIRE
-    if action == DiscreteActions.ACT:# self.act_pressed:
+    if action == DiscreteActions.ACT:  # self.act_pressed:
         a = DiscreteActions.ACT
 
     return (x, y, r), a
@@ -50,7 +54,7 @@ def discrete_actions_to_continuos(action):
 
 class DracarysEnv(Env):
     metadata = {
-        "render_modes": [
+        "render.modes": [
             "rgb_array",
             # "ansi",
         ]
@@ -58,11 +62,11 @@ class DracarysEnv(Env):
     reward_range = (0, 1)
     action_space = DISCRETE_ACTION_SPACE
     observation_space = Box(low=0, high=255, shape=(128, 128, 3), dtype=np.uint8)
-    spec = EnvSpec(
-        id='dracarys-v1',
-        entry_point='dracarys.env:DracarysEnv',
-        max_episode_steps=10_000,
-    )
+    # spec = EnvSpec(
+    #     id='dracarys-v1',
+    #     entry_point='dracarys.env:DracarysEnv',
+    #     max_episode_steps=10_000,
+    # )
 
     def __init__(self):
         self.game = Game(params=P)
@@ -83,7 +87,7 @@ class DracarysEnv(Env):
         info = self._create_info()
         return observation, reward, done, info
 
-    def render(self):
+    def render(self, *_args, **_kwargs):
         img = self.player.render()
         img = Image.fromarray(img).resize((128, 128))
         img = np.asarray(img)
@@ -95,13 +99,14 @@ class DracarysEnv(Env):
 
 def _test_env():
     from PIL import Image
+
     env = DracarysEnv()
     for i in range(20):
         action = env.action_space.sample()
         obs, reward, _, _ = env.step(action)
         print(action, reward)
-        Image.fromarray(obs).save(BASE_DIR + f'/temp/images/img{i}.png')
+        Image.fromarray(obs).save(BASE_DIR + f"/temp/images/img{i}.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _test_env()

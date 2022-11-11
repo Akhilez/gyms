@@ -102,7 +102,8 @@ class Dragon(Character):
 
         # Force
         force = (x * self.p.force_max, y * self.p.force_max)
-        self.body.apply_force_at_local_point(force=force, point=(0, 0))
+        # self.body.apply_force_at_local_point(force=force, point=(0, 0))
+        self.body.apply_impulse_at_local_point(impulse=force, point=(0, 0))
 
         # Rotation
         rotation = self.p.rotation_max_speed * r
