@@ -136,7 +136,7 @@ class NMMEnv(AECEnv):
         # ============ KILLING ============
 
         if self.must_kill:
-            # Remove the opponent's piece
+            self.must_kill = False
             self.board[action] = 0
 
             # Check if opponent has only 2 mills, then set termination to true, rewards to -1 and 1.
@@ -144,36 +144,19 @@ class NMMEnv(AECEnv):
                 self.terminations = {p: True, o: True}
                 self.rewards = {p: 1, o: -1}
 
-            # Set must_kill to False
-            self.must_kill = False
-
-            # Switch player. Set proper action masks.
             self.switch(p, o)
 
         # =========== PHASE 1 PLACING ================
 
         elif self.mills_placed[p] < 9:
             self.mills_placed[p] += 1
-
-            # Simply place the mill.
-            self.board[action] = p2n[p]
-
-            # If killable, don't switch player. Set proper action masks. Set must_kill = True.
-            if self._made_3_in_a_row(action):
-                # Opponent positions
-                self.action_masks[p] = (self.board == p2n[o]) * 1
-                self.must_kill = True
-            # Else, switch player. Set proper action masks
-            else:
-                self.switch(p, o)
+            self.place_mill(action, p, o)
 
         # =========== PHASE 2 LIFTING =============
 
         elif self.lifted is None:
             # Lift the piece. Store its location in self.lifted. Don't switch the player.
             self.lifted = action
-
-            # Set proper action masks.
             self.action_masks[p] = self._get_movable_to_positions(action)
 
         # ============ PHASE 2 PLACING ==============
@@ -181,17 +164,7 @@ class NMMEnv(AECEnv):
         else:
             self.board[self.lifted] = 0
             self.lifted = None
-
-            # Place the piece in the "to" position.
-            self.board[action] = p2n[p]
-
-            # If killable, don't switch player. Set proper action masks. Set must_kill = True.
-            if self._made_3_in_a_row(action):
-                self.action_masks[p] = (self.board == p2n[o]) * 1
-                self.must_kill = True
-            # Else, switch player. Set proper action masks
-            else:
-                self.switch(p, o)
+            self.place_mill(action, p, o)
 
     def reset(self, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None) -> None:
         self.__init__(self.render_mode)
@@ -226,6 +199,19 @@ class NMMEnv(AECEnv):
             print(s)
         else:
             return s
+
+    def place_mill(self, action, p, o):
+        # Simply place the mill.
+        self.board[action] = p2n[p]
+
+        # If killable, don't switch player. Set proper action masks. Set must_kill = True.
+        if self._made_3_in_a_row(action):
+            # Opponent positions
+            self.action_masks[p] = (self.board == p2n[o]) * 1
+            self.must_kill = True
+        # Else, switch player. Set proper action masks
+        else:
+            self.switch(p, o)
 
     def switch(self, p, o):
         self.agent_selection = o
