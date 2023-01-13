@@ -2,11 +2,10 @@ from typing import Optional
 import numpy as np
 from gymnasium.spaces import Discrete, Box
 from pettingzoo import AECEnv
-from pettingzoo.utils.env import ObsType
 
 
 def env(render_mode=None):
-    env = NMMEnv(render_mode=render_mode)
+    env = raw_env(render_mode=render_mode)
     return env
 
 
@@ -93,7 +92,14 @@ flat_to_2d = {
 }
 
 
-class NMMEnv(AECEnv):
+class ActionType:
+    PLACE = 0  # Phase 1: Placing piece for the first time.
+    LIFT = 1  # Phase 2: Lifting the piece to move it.
+    DROP = 2  # Phase 2: Destination location for moving a piece.
+    KILL = 3  # Phase 1 & 2: Removing opponent's piece.
+
+
+class raw_env(AECEnv):
     metadata = {
         'render_modes': ['human', 'ansi'],
         'name': 'nmm',
@@ -103,12 +109,13 @@ class NMMEnv(AECEnv):
         super().__init__()
         self.possible_agents = ['player_0', 'player_1']
         self.action_spaces = {agent: Discrete(24) for agent in self.possible_agents}
-        self.observation_spaces = {agent: Box(0, 1, (2, 7, 7)) for agent in self.possible_agents}
+        # self.observation_spaces = {agent: Box(0, 1, (2, 7, 7)) for agent in self.possible_agents}
+        self.observation_spaces = {agent: Box(0, 1, (72,)) for agent in self.possible_agents}
         self.render_mode = render_mode
+        self.max_steps = 1000
 
         self.agents = self.possible_agents[:]
         self.rewards = {a: 0 for a in self.agents}
-        self._cumulative_rewards = {agent: 0 for agent in self.agents}
         self.terminations = {agent: False for agent in self.agents}
         self.truncations = {agent: False for agent in self.agents}
         self.infos = {agent: {} for agent in self.agents}
@@ -118,10 +125,18 @@ class NMMEnv(AECEnv):
         self.must_kill = False
         self.action_masks = {a: np.ones(24) for a in self.agents}
         self.mills_placed = {a: 0 for a in self.agents}
+        self.step_ = 0
 
     def step(self, action: int):
         p = self.agent_selection
         o = p2o[p]
+
+        # If taken too long to finish, truncate. Draw.
+        self.step_ += 1
+        if self.step_ > self.max_steps:
+            self.truncations = {p: True, o: True}
+            self.rewards = {p: 0, o: 0}
+            return
 
         # If done, raise exception.
         if self.terminations[p]:
@@ -169,18 +184,36 @@ class NMMEnv(AECEnv):
     def reset(self, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None) -> None:
         self.__init__(self.render_mode)
 
-    def observe(self, agent: str) -> Optional[ObsType]:
-        observation = np.zeros((2, 7, 7))
-        p = p2n[self.agent_selection]
-        o = p2n[p2o[self.agent_selection]]
-        for i, piece in enumerate(self.board):
-            if piece == p:
-                x, y = flat_to_2d[i]
-                observation[:, x, y] = [1, 0]
-            elif piece == o:
-                x, y = flat_to_2d[i]
-                observation[:, x, y] = [0, 1]
-        return {'observation': observation, 'action_mask': self.action_masks[self.agent_selection]}
+    # def observe(self, agent: str) -> Optional[ObsType]:
+    #     observation = np.zeros((2, 7, 7))
+    #     p = p2n[self.agent_selection]  # TODO: Use agent parameter lol
+    #     o = p2n[p2o[self.agent_selection]]
+    #     for i, piece in enumerate(self.board):
+    #         if piece == p:
+    #             x, y = flat_to_2d[i]
+    #             observation[:, x, y] = [1, 0]
+    #         elif piece == o:
+    #             x, y = flat_to_2d[i]
+    #             observation[:, x, y] = [0, 1]
+    #     return {'observation': observation, 'action_mask': self.action_masks[self.agent_selection]}
+
+    def observe(self, agent: str):
+        p = p2n[agent]
+        o = p2n[p2o[agent]]
+
+        # Adding lifted position because it needs to be observable to know the value of the state.
+        # And it also effects policy.
+        lifted_position = np.zeros(24)
+        if self.lifted is not None:
+            lifted_position[self.lifted] = 1
+
+        obs = np.concatenate((self.board == p, self.board == o, lifted_position)) * 1
+
+        return {
+            'observation': obs,
+            'action_mask': self.action_masks[agent].astype(int),
+            'action_type': self.get_action_type(agent),
+        }
 
     def render(self):
         symbol = '•XO'
@@ -225,6 +258,15 @@ class NMMEnv(AECEnv):
                 self.terminations = {p: True, o: True}
                 self.rewards = {p: 1, o: -1}
 
+    def get_action_type(self, agent):
+        if self.must_kill:
+            return ActionType.KILL
+        if self.mills_placed[agent] < 9:
+            return ActionType.PLACE
+        if self.lifted is not None:
+            return ActionType.DROP
+        return ActionType.LIFT
+
     def _made_3_in_a_row(self, action) -> bool:
         p = p2n[self.agent_selection]
         for a, b in rows[action]:
@@ -244,4 +286,8 @@ class NMMEnv(AECEnv):
                 mask[pos] = 1
         return mask
 
-
+    def state(self):
+        s = self.board.astype(int).tolist()
+        s.append(self.agent_selection)
+        s.append(self.get_action_type(self.agent_selection))
+        return tuple(s)
